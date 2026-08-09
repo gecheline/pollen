@@ -12,6 +12,7 @@ import json
 import os
 import queue
 import re
+import subprocess
 import threading
 import traceback
 from concurrent.futures import ThreadPoolExecutor
@@ -159,9 +160,9 @@ def _capture_timestamp() -> tuple[str, str]:
     return now.strftime("%Y-%m-%dT%H-%M-%S"), now.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def _unique_capture_path(stamp: str, slug: str) -> Path:
+def _unique_capture_path(directory: Path, stamp: str, slug: str) -> Path:
     base = f"{stamp}-{slug}" if slug else stamp
-    path = CAPTURES_DIR / f"{base}.json"
+    path = directory / f"{base}.json"
     if not path.exists():
         return path
     # Two saves within the same wall-clock second (same slug) would
@@ -169,15 +170,49 @@ def _unique_capture_path(stamp: str, slug: str) -> Path:
     # disambiguate rather than clobber.
     n = 2
     while True:
-        candidate = CAPTURES_DIR / f"{base}-{n}.json"
+        candidate = directory / f"{base}-{n}.json"
         if not candidate.exists():
             return candidate
         n += 1
 
 
+def _choose_folder_sync() -> str | None:
+    """Blocking — runs `choose folder`, a real native Finder dialog, via
+    osascript. None if the user cancels (osascript exits non-zero) or this
+    isn't macOS/has no GUI session (e.g. running fixtures in CI)."""
+    script = 'POSIX path of (choose folder with prompt "Choose where to save pollen captures")'
+    try:
+        result = subprocess.run(["osascript", "-e", script], capture_output=True, text=True, timeout=300)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if result.returncode != 0:
+        return None
+    return result.stdout.strip() or None
+
+
+@app.post("/api/capture/choose-folder")
+async def choose_capture_folder():
+    """Fronts a native folder-picker dialog. The dialog itself blocks on
+    user interaction for as long as it's open, so this runs on a plain
+    executor thread — never mlx_executor, which has nothing to do with it
+    and must stay free for model loads/generation."""
+    loop = asyncio.get_event_loop()
+    path = await loop.run_in_executor(None, _choose_folder_sync)
+    return {"path": path}
+
+
 @app.post("/api/capture")
 async def save_capture(req: CaptureRequest):
-    CAPTURES_DIR.mkdir(parents=True, exist_ok=True)
+    if req.folder:
+        # An explicit, user-chosen destination (via the picker above) is a
+        # promise the file lands exactly there — fail loudly rather than
+        # silently redirecting to the default if it turns out unusable.
+        target_dir = Path(req.folder)
+        if not target_dir.is_dir():
+            raise HTTPException(status_code=400, detail=f"{target_dir} is not a directory")
+    else:
+        target_dir = CAPTURES_DIR
+        target_dir.mkdir(parents=True, exist_ok=True)
 
     # model_name/embedding_hash come from the registry, never the client —
     # they're what ties a capture to the coords it can legitimately be
@@ -196,7 +231,7 @@ async def save_capture(req: CaptureRequest):
 
     slug = _slugify(req.slug)
     stamp, captured_at = _capture_timestamp()
-    path = _unique_capture_path(stamp, slug)
+    path = _unique_capture_path(target_dir, stamp, slug)
 
     record = {
         "captured_at": captured_at,
@@ -214,7 +249,7 @@ async def save_capture(req: CaptureRequest):
     tmp_path.write_text(json.dumps(record))
     os.replace(tmp_path, path)
 
-    return {"path": f"captures/{path.name}", "bytes": path.stat().st_size}
+    return {"path": str(path), "bytes": path.stat().st_size}
 
 
 @app.get("/api/captures")

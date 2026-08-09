@@ -100,12 +100,26 @@ export interface CaptureListEntry {
 // and received, with zero reshaping on the way to the wire. Typing them
 // narrowly here would invite "helpfully" normalizing a field in transit,
 // which is exactly what a byte-faithful capture can't tolerate.
-export async function saveCapture(payload: { slug: string; request: unknown; frames: unknown[] }): Promise<CaptureResult> {
+export async function saveCapture(payload: {
+  slug: string
+  request: unknown
+  frames: unknown[]
+  folder?: string | null
+}): Promise<CaptureResult> {
   return postJSON('/api/capture', payload)
 }
 
 export async function listCaptures(): Promise<CaptureListEntry[]> {
   return getJSON('/api/captures')
+}
+
+// Fronts a native macOS folder-picker dialog (backend-side osascript, not a
+// browser API) — works regardless of which browser pollen happens to be
+// running in, unlike the File System Access API. null means the user
+// canceled, not an error.
+export async function chooseSaveFolder(): Promise<string | null> {
+  const { path } = await postJSON<{ path: string | null }>('/api/capture/choose-folder', {})
+  return path
 }
 
 // ── Chat (SSE) ────────────────────────────────────────────────────────────────

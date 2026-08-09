@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from 'react'
 import Label from './Label'
 import type { GenState } from '../types'
 import type { ModelEntry } from '../lib/loadVocabMap'
-import type { CaptureResult } from '../lib/api'
+import { chooseSaveFolder, type CaptureResult } from '../lib/api'
 
 export type ModelStatus = 'loading' | 'ready' | 'error'
 
@@ -31,7 +31,7 @@ interface TopBarProps {
   modelError: string | null
   modelLoadingLabel: string
   captureReady: boolean
-  onSaveCapture: (slug: string) => Promise<CaptureResult>
+  onSaveCapture: (slug: string, folder: string | null) => Promise<CaptureResult>
 }
 
 // mlx-community/Llama-3.2-3B-Instruct-4bit -> Llama-3.2-3B-Instruct-4bit —
@@ -43,12 +43,21 @@ function shortModelName(modelName: string): string {
 
 const SAVED_FLASH_MS = 3000
 
+function basename(path: string): string {
+  return path.replace(/\/+$/, '').split('/').pop() || path
+}
+
 // An instrument control, not a call to action: text swaps in place rather
 // than a popover/modal. Idle -> click opens an inline slug field (Enter
 // saves, Escape cancels) -> briefly shows the filename it wrote, then
 // reverts. Owns only this transient UI state; the actual frame buffer and
 // save call live in App.tsx, which is the only thing that knows what a
 // "completed generation" is.
+//
+// The chosen destination folder is state here too, not lifted to App.tsx —
+// TopBar/SaveControl never unmounts across generations, so a plain useState
+// already gives exactly "remember it for the session, reset on reload"
+// without any extra plumbing.
 function SaveControl({
   ready,
   disabled,
@@ -56,12 +65,14 @@ function SaveControl({
 }: {
   ready: boolean
   disabled: boolean
-  onSave: (slug: string) => Promise<CaptureResult>
+  onSave: (slug: string, folder: string | null) => Promise<CaptureResult>
 }) {
   const [open, setOpen] = useState(false)
   const [slug, setSlug] = useState('')
   const [saving, setSaving] = useState(false)
   const [savedFilename, setSavedFilename] = useState<string | null>(null)
+  const [folder, setFolder] = useState<string | null>(null)
+  const [pickingFolder, setPickingFolder] = useState(false)
   const revertTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => () => {
@@ -76,7 +87,7 @@ function SaveControl({
   const commit = async () => {
     setSaving(true)
     try {
-      const { path } = await onSave(slug)
+      const { path } = await onSave(slug, folder)
       setSavedFilename(path.split('/').pop() ?? path)
       revertTimer.current = setTimeout(() => setSavedFilename(null), SAVED_FLASH_MS)
     } catch (e) {
@@ -90,6 +101,18 @@ function SaveControl({
     }
   }
 
+  const changeFolder = async () => {
+    setPickingFolder(true)
+    try {
+      const path = await chooseSaveFolder()
+      if (path) setFolder(path) // null = user canceled the dialog — leave the current choice alone
+    } catch (e) {
+      console.error('folder picker failed', e)
+    } finally {
+      setPickingFolder(false)
+    }
+  }
+
   if (savedFilename) {
     return (
       <span style={{ fontSize: 9, letterSpacing: '0.08em', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>Saved: {savedFilename}</span>
@@ -98,30 +121,70 @@ function SaveControl({
 
   if (open) {
     return (
-      <input
-        autoFocus
-        disabled={saving}
-        value={slug}
-        onChange={e => setSlug(e.target.value)}
-        onBlur={close}
-        onKeyDown={e => {
-          if (e.key === 'Escape') close()
-          if (e.key === 'Enter') commit()
-        }}
-        placeholder="slug (optional)"
-        style={{
-          width: 150,
-          background: 'none',
-          border: '1px solid var(--hairline)',
-          outline: 'none',
-          borderRadius: 0,
-          padding: '3px 6px',
-          fontFamily: 'Instrument Sans, sans-serif',
-          fontSize: 9,
-          letterSpacing: '0.04em',
-          color: 'var(--ink)',
-        }}
-      />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <input
+          autoFocus
+          disabled={saving}
+          value={slug}
+          onChange={e => setSlug(e.target.value)}
+          onBlur={close}
+          onKeyDown={e => {
+            if (e.key === 'Escape') close()
+            if (e.key === 'Enter') commit()
+          }}
+          placeholder="slug (optional)"
+          style={{
+            width: 150,
+            background: 'none',
+            border: '1px solid var(--hairline)',
+            outline: 'none',
+            borderRadius: 0,
+            padding: '3px 6px',
+            fontFamily: 'Instrument Sans, sans-serif',
+            fontSize: 9,
+            letterSpacing: '0.04em',
+            color: 'var(--ink)',
+          }}
+        />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span
+            title={folder ?? '~/.pollen/captures (default)'}
+            style={{
+              fontSize: 8,
+              color: 'var(--ink-faint)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              maxWidth: 90,
+            }}
+          >
+            {folder ? basename(folder) : 'captures'}
+          </span>
+          <button
+            // preventDefault on mousedown, not just the click handler: a
+            // plain click here would first blur the slug input above,
+            // which calls close() and unmounts this whole form before the
+            // click itself ever fires — this is what stops that.
+            onMouseDown={e => e.preventDefault()}
+            onClick={changeFolder}
+            disabled={pickingFolder}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: pickingFolder ? 'wait' : 'pointer',
+              padding: 0,
+              fontSize: 8,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              color: 'var(--ink-muted)',
+              textDecoration: 'underline',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {pickingFolder ? '…' : 'change'}
+          </button>
+        </div>
+      </div>
     )
   }
 

@@ -435,11 +435,11 @@ export default function App() {
     }
   }
 
-  async function handleSaveCapture(slug: string): Promise<CaptureResult> {
+  async function handleSaveCapture(slug: string, folder: string | null): Promise<CaptureResult> {
     if (!capturedRequestRef.current || capturedFramesRef.current.length === 0) {
       throw new Error('nothing to save yet')
     }
-    return saveCapture({ slug, request: capturedRequestRef.current, frames: capturedFramesRef.current })
+    return saveCapture({ slug, request: capturedRequestRef.current, frames: capturedFramesRef.current, folder })
   }
 
   const bannerMessage = modelError ?? generateError

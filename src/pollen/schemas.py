@@ -53,6 +53,9 @@ class CaptureRequest(BaseModel):
     slug: str = ""
     request: dict[str, Any]
     frames: list[dict[str, Any]]
+    # Absolute path from a prior POST /api/capture/choose-folder (a native
+    # folder picker — see main.py). None uses the default ~/.pollen/captures.
+    folder: str | None = None
 
 
 def with_length(system_prompt: str, length_hint: str) -> str:
