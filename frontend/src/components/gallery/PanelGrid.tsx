@@ -1,9 +1,18 @@
-// Renders one row of PanelTops followed immediately by one row of
-// PanelBottoms — the same two-row split App.tsx uses for the local app,
-// minus the QuestionBar breaker between them (the gallery has no question
-// input; there's nothing to break up the panels with). Owns hover state
-// itself (App.tsx's hoverByPanel, but self-contained here since no other
-// gallery component needs to coordinate hover across panels).
+// Desktop: one row of PanelTops followed by one row of PanelBottoms — the
+// same two-row split App.tsx uses for the local app, minus the QuestionBar
+// breaker between them (the gallery has no question input to break the
+// panels up with).
+//
+// Narrow viewports (phone widths): each panel becomes its own full-width
+// block — PanelTop immediately followed by its own PanelBottom — stacked
+// top to bottom instead of squeezed side by side. Same components either
+// way, just a different arrangement of the same JSX; PanelTop/PanelBottom's
+// own `flex: 1` styling is inert outside a flex row, so no CSS fights
+// happen switching between the two.
+//
+// Owns hover state itself (App.tsx's hoverByPanel, but self-contained here
+// since no other gallery component needs to coordinate hover across
+// panels).
 
 import { useState } from 'react'
 import type * as d3 from 'd3'
@@ -14,6 +23,7 @@ import type { TurnRecord } from '../PanelTop'
 import PanelTop from '../PanelTop'
 import PanelBottom from '../PanelBottom'
 import { buildSurprisalScale, buildTraceScales } from '../../lib/scales'
+import { useMediaQuery } from '../../lib/useMediaQuery'
 
 export interface GridPanel {
   def: PanelDef
@@ -38,9 +48,15 @@ interface PanelGridProps {
   mapInfo?: string
 }
 
+const MOBILE_QUERY = '(max-width: 700px)'
+
 export default function PanelGrid({ panels, vocabPoints, mapLimits, isDark, lensAccents, mapInfo }: PanelGridProps) {
   const [hoverByPanel, setHoverByPanel] = useState<Record<string, Hover | null>>({})
-  const narrow = panels.length >= 4
+  const isMobile = useMediaQuery(MOBILE_QUERY)
+  // Stacked mobile panels are each full device width — the cramped-width
+  // "narrow" treatment (smaller font/padding, for >= 4 columns squeezed
+  // side by side) doesn't apply there regardless of how many panels exist.
+  const narrow = !isMobile && panels.length >= 4
   const genState: GenState = 'complete' // gallery panels are always fully-loaded, never "generating" mid-stream
 
   // Domains sized to what's actually in these panels (their full,
@@ -66,48 +82,66 @@ export default function PanelGrid({ panels, vocabPoints, mapLimits, isDark, lens
 
   const onHover = (id: string) => (h: Hover | null) => setHoverByPanel(prev => ({ ...prev, [id]: h }))
 
+  const top = (p: GridPanel) => (
+    <PanelTop
+      key={p.def.id}
+      def={p.def}
+      data={p.data}
+      vocabPoints={vocabPoints}
+      mapLimits={mapLimits}
+      activations={p.activations}
+      genState={genState}
+      revealCount={p.revealCount}
+      opacityScale={opacityScale}
+      lensAccents={lensAccents}
+      isDark={isDark}
+      narrow={narrow}
+      history={p.history ?? []}
+      currentQuestion={p.currentQuestion ?? ''}
+      hover={hoverByPanel[p.def.id] ?? null}
+      onHover={onHover(p.def.id)}
+      mapInfo={mapInfo}
+      // The gallery page scrolls itself (see GalleryApp.tsx) — an inner
+      // scroll trap on top of that is what read as "cut off, not
+      // scrollable" rather than intentional. Let the text grow naturally
+      // and the page handle the rest, on both desktop and mobile.
+      answerOverflow="visible"
+    />
+  )
+
+  const bottom = (p: GridPanel) => (
+    <PanelBottom
+      key={p.def.id}
+      data={p.data}
+      accent={p.def.accent}
+      revealCount={p.revealCount}
+      yScale={yScale}
+      thicknessScale={thicknessScale}
+      lensAccents={lensAccents}
+      narrow={narrow}
+      traceVisible={true}
+      hover={hoverByPanel[p.def.id] ?? null}
+      onHover={onHover(p.def.id)}
+    />
+  )
+
+  if (isMobile) {
+    return (
+      <div style={{ border: '1px solid var(--hairline)', marginBottom: 24 }}>
+        {panels.map((p, i) => (
+          <div key={p.def.id} style={{ borderBottom: i < panels.length - 1 ? '1px solid var(--hairline)' : 'none' }}>
+            {top(p)}
+            {bottom(p)}
+          </div>
+        ))}
+      </div>
+    )
+  }
+
   return (
     <div style={{ border: '1px solid var(--hairline)', borderBottom: 'none', marginBottom: 24 }}>
-      <div style={{ display: 'flex' }}>
-        {panels.map(p => (
-          <PanelTop
-            key={p.def.id}
-            def={p.def}
-            data={p.data}
-            vocabPoints={vocabPoints}
-            mapLimits={mapLimits}
-            activations={p.activations}
-            genState={genState}
-            revealCount={p.revealCount}
-            opacityScale={opacityScale}
-            lensAccents={lensAccents}
-            isDark={isDark}
-            narrow={narrow}
-            history={p.history ?? []}
-            currentQuestion={p.currentQuestion ?? ''}
-            hover={hoverByPanel[p.def.id] ?? null}
-            onHover={onHover(p.def.id)}
-            mapInfo={mapInfo}
-          />
-        ))}
-      </div>
-      <div style={{ display: 'flex', borderTop: '1px solid var(--hairline)' }}>
-        {panels.map(p => (
-          <PanelBottom
-            key={p.def.id}
-            data={p.data}
-            accent={p.def.accent}
-            revealCount={p.revealCount}
-            yScale={yScale}
-            thicknessScale={thicknessScale}
-            lensAccents={lensAccents}
-            narrow={narrow}
-            traceVisible={true}
-            hover={hoverByPanel[p.def.id] ?? null}
-            onHover={onHover(p.def.id)}
-          />
-        ))}
-      </div>
+      <div style={{ display: 'flex' }}>{panels.map(top)}</div>
+      <div style={{ display: 'flex', borderTop: '1px solid var(--hairline)' }}>{panels.map(bottom)}</div>
     </div>
   )
 }

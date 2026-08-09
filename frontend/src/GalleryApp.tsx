@@ -24,6 +24,20 @@ export default function GalleryApp() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [view, setView] = useState<View>(() => viewFromLocation())
 
+  // index.css's `html, body { height: 100%; overflow: hidden }` is the
+  // local app's own fixed-viewport workspace design (every panel scrolls
+  // internally, the page itself never does) — correct there, wrong here.
+  // The gallery is a normal read-through page: content taller than one
+  // screen should just scroll the page, not get silently clipped with no
+  // way to reach it. Overridden here (inline style wins over the
+  // stylesheet) rather than touching index.css, which both builds share.
+  useEffect(() => {
+    document.documentElement.style.overflow = 'auto'
+    document.documentElement.style.height = 'auto'
+    document.body.style.overflow = 'auto'
+    document.body.style.height = 'auto'
+  }, [])
+
   useEffect(() => {
     let cancelled = false
     loadGalleryIndex()

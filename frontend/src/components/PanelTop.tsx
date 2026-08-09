@@ -45,6 +45,14 @@ interface PanelTopProps {
   // the map exactly as it always has — nothing wraps it, nothing new
   // mounts. Added as a prop rather than touching VocabMap.tsx itself.
   mapInfo?: ReactNode
+  // Gallery-only: the local app is a fixed-viewport workspace (App.tsx's
+  // 100vh/overflow:hidden root) where each panel's answer text scrolls
+  // internally, by design — 'auto' (the default) keeps that. The gallery
+  // is a normal page that scrolls itself, so trapping a second scroll
+  // region inside each panel on top of that reads as broken ("cut off,
+  // not scrollable") rather than intentional — it passes 'visible' so
+  // the text just grows and the page handles the rest.
+  answerOverflow?: 'auto' | 'visible'
 }
 
 const MIXED_COLOR_DEEP_EXPLANATION =
@@ -67,6 +75,7 @@ export default function PanelTop({
   hover,
   onHover,
   mapInfo,
+  answerOverflow = 'auto',
 }: PanelTopProps) {
   const { label, accent } = def
 
@@ -136,7 +145,7 @@ export default function PanelTop({
           (oldest first) render as plain muted text above the live one;
           scrolls once history makes it taller than the panel, rather than
           clipping older turns silently out of view. */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: narrow ? '8px 10px' : '10px 12px', borderTop: '1px solid var(--hairline)' }}>
+      <div style={{ flex: 1, overflowY: answerOverflow, padding: narrow ? '8px 10px' : '10px 12px', borderTop: '1px solid var(--hairline)' }}>
         {history.map((turn, i) => (
           <div key={i} style={{ marginBottom: 10, paddingBottom: 10, borderBottom: '1px solid var(--hairline)' }}>
             <p

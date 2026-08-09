@@ -5,6 +5,9 @@
 
 import { useState } from 'react'
 import type { GalleryIndex, GalleryCard } from '../../lib/gallery'
+import { useMediaQuery } from '../../lib/useMediaQuery'
+
+const MOBILE_QUERY = '(max-width: 700px)'
 
 function CardTile({ card, onClick }: { card: GalleryCard; onClick: () => void }) {
   const [imgFailed, setImgFailed] = useState(false)
@@ -47,22 +50,31 @@ function CardTile({ card, onClick }: { card: GalleryCard; onClick: () => void })
 }
 
 export default function Landing({ index, onOpenCard }: { index: GalleryIndex; onOpenCard: (cardId: string) => void }) {
+  const isMobile = useMediaQuery(MOBILE_QUERY)
+
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px 0' }}>
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: index.sections.length > 1 ? '1fr 1fr' : '1fr',
+          gridTemplateColumns: !isMobile && index.sections.length > 1 ? '1fr 1fr' : '1fr',
           gap: 0,
           border: '1px solid var(--hairline)',
         }}
       >
         {index.sections.map((section, i) => (
-          <div key={section.id} style={{ borderLeft: i > 0 ? '1px solid var(--hairline)' : 'none', padding: 24 }}>
+          <div
+            key={section.id}
+            style={{
+              borderLeft: !isMobile && i > 0 ? '1px solid var(--hairline)' : 'none',
+              borderTop: isMobile && i > 0 ? '1px solid var(--hairline)' : 'none',
+              padding: 24,
+            }}
+          >
             <div style={{ fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 16 }}>
               {section.title}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16 }}>
               {section.cards.map(card => (
                 <CardTile key={card.id} card={card} onClick={() => onOpenCard(card.id)} />
               ))}
@@ -71,7 +83,16 @@ export default function Landing({ index, onOpenCard }: { index: GalleryIndex; on
         ))}
       </div>
 
-      <div style={{ padding: '28px 4px 40px', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 20 }}>
+      <div
+        style={{
+          padding: '28px 4px 40px',
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          alignItems: isMobile ? 'flex-start' : 'baseline',
+          justifyContent: 'space-between',
+          gap: 20,
+        }}
+      >
         <p style={{ margin: 0, fontSize: 12, lineHeight: 1.6, color: 'var(--ink-muted)', maxWidth: 620 }}>{index.footer.text}</p>
         <a
           href={index.github_url}
