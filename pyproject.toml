@@ -33,7 +33,7 @@ build = ["scikit-learn>=1.4.0", "umap-learn>=0.5.6"]
 pollen = "pollen.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/pollen-app/pollen"
+Homepage = "https://github.com/gecheline/pollen"
 
 [tool.hatch.build.targets.wheel]
 # `packages` sweeps the whole src/pollen/ directory tree as-is — every file

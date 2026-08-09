@@ -1,7 +1,7 @@
 # pollen
 
 ```
-uvx --from git+https://github.com/pollen-app/pollen pollen
+uvx --from git+https://github.com/gecheline/pollen pollen
 ```
 
 That starts a local server and opens a browser tab. No Node.js, no manual setup.
