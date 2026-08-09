@@ -1,0 +1,33 @@
+{
+  "asset_version": 2,
+  "model_name": "mlx-community/Llama-3.2-3B-Instruct-4bit",
+  "embedding_hash": "d5b87b64aa56956d",
+  "vocab_size": 128256,
+  "embedding_dim": 3072,
+  "projection": {
+    "pca_dims": 50,
+    "pca_variance_explained": 0.0609,
+    "method": "umap",
+    "n_neighbors": 15,
+    "min_dist": 0.1,
+    "random_state": 42
+  },
+  "generated_at": "2026-08-08T22:50:39.636316+00:00",
+  "files": {
+    "coords": {
+      "path": "coords.u16.bin",
+      "format": "uint16le",
+      "layout": "interleaved xy, row index == token id",
+      "count": 128256,
+      "decode": "value / 65535 -> [0,1]",
+      "bytes": 513024
+    },
+    "tokens": {
+      "path": "tokens.json",
+      "format": "json array, index == token id",
+      "count": 128256,
+      "bytes": 1361802,
+      "lazy": true
+    }
+  }
+}

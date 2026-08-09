@@ -9,31 +9,44 @@ import siteConfiguration from './.figma/make/site.json'
 export default defineConfig(({ mode }) => {
   // .figma/make/deploy-preview passes `--mode development` for cached-preview builds.
   const emitSourcemaps = mode === 'development'
+  // `pnpm run build:gallery` (--mode gallery) builds the public, hosted,
+  // no-backend gallery instead of the packaged local app — same source
+  // tree, same components, only the data source and shell around them
+  // differ (see GalleryApp.tsx / main.tsx). Never both at once: this repo
+  // ships exactly one of dist-gallery/ or src/pollen/web/ per build.
+  const gallery = mode === 'gallery'
 
   return {
     // Hardcoded, not derived from FIGMA_PUBLIC_URL — that's only meaningful
     // for the Figma Make deploy-preview path, and would be actively wrong
-    // here: the packaged app is always served from the root of whatever
-    // origin FastAPI answers on.
+    // here: both the packaged app and the gallery are always served from
+    // the root of whatever origin answers (FastAPI, or the static host).
     base: '/',
+    // public-gallery/ holds the baked gallery data (index.json, per-turn
+    // panel JSON, the one model's coords) instead of the local app's own
+    // public/ — copied to the build output root as-is, same as any Vite
+    // publicDir.
+    publicDir: gallery ? 'public-gallery' : 'public',
     build: {
       sourcemap: emitSourcemaps ? 'inline' : false,
       minify: !emitSourcemaps,
-      // Builds straight into the Python package, where main.py serves it
-      // from and pyproject.toml's force-include ships it in the wheel.
-      // emptyOutDir so a stale file from a previous build/model never
-      // lingers in what gets shipped.
-      outDir: '../src/pollen/web',
+      // Local app builds straight into the Python package (main.py serves
+      // it, pyproject.toml force-includes it in the wheel). Gallery builds
+      // to its own directory — a plain static artifact, no Python package
+      // involved at all. emptyOutDir so a stale file from a previous
+      // build/model never lingers in what gets shipped either way.
+      outDir: gallery ? 'dist-gallery' : '../src/pollen/web',
       emptyOutDir: true,
       // Vite's own default output subdirectory is "assets" — which would
-      // collide with main.py's separate `/assets` mount for the vocab-map
-      // coords (src/pollen/assets/, a sibling of this build's own output,
-      // served at the same URL prefix). Starlette mounts don't fall
-      // through to the next one on a 404 inside a matched mount, so if
-      // both used "/assets" the bundled JS/CSS would 404 in production
-      // while dev (proxy, separate origins) hid the collision completely.
-      // Renamed here, not the vocab-map mount, since loadVocabMap.ts's
-      // ASSET_ROOT is the one path that's genuinely load-bearing elsewhere.
+      // collide with the vocab-map coords also served at "/assets" (the
+      // local app's own /assets mount in main.py; the gallery's own
+      // public-gallery/assets/, copied verbatim by publicDir above).
+      // Starlette mounts (and a plain static host) don't fall through to
+      // another location on a 404, so if both used "/assets" the bundled
+      // JS/CSS would 404 in production while dev hid the collision
+      // completely. Renamed here, not the vocab-map path, since
+      // loadVocabMap.ts's ASSET_ROOT is the one path that's genuinely
+      // load-bearing elsewhere, in both builds.
       assetsDir: '_app',
     },
     plugins: [
@@ -59,10 +72,19 @@ export default defineConfig(({ mode }) => {
       // proxy is what makes those same relative calls resolve against the
       // backend running separately on :8000. No code branches on dev vs.
       // packaged; this is the only place that distinction lives.
-      proxy: {
-        '/api': 'http://localhost:8000',
-        '/assets': 'http://localhost:8000',
-      },
+      //
+      // Gallery mode gets none of this: it has no backend at all, and
+      // proxying its own /assets (served straight out of public-gallery/
+      // by Vite's dev server, same as any publicDir) to a local backend
+      // would silently break `vite --mode gallery` dev testing — or worse,
+      // serve the wrong model's coords if a local backend happens to be
+      // running for unrelated reasons.
+      proxy: gallery
+        ? undefined
+        : {
+            '/api': 'http://localhost:8000',
+            '/assets': 'http://localhost:8000',
+          },
     },
     preview: {
       host: '0.0.0.0',

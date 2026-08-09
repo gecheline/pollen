@@ -1,10 +1,25 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App'
 import './index.css'
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
+// Same entry point, same CSS tokens, two possible roots — which one is a
+// build-time decision (vite.config.ts's `mode`), not a runtime branch.
+// Dynamic import rather than importing both App and GalleryApp statically
+// up top: Vite replaces import.meta.env.MODE with a literal string at
+// build time, so the unreachable import() call gets dropped entirely —
+// the packaged local app's bundle never evaluates (or even fetches)
+// GalleryApp's module, and vice versa, guaranteed by the build itself
+// rather than relying on a minifier to tree-shake an unused component
+// tree out of a static import.
+async function boot() {
+  const Root =
+    import.meta.env.MODE === 'gallery' ? (await import('./GalleryApp')).default : (await import('./App')).default
+
+  ReactDOM.createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+      <Root />
+    </React.StrictMode>,
+  )
+}
+
+boot()

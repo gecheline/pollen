@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
+    "build:gallery": "vite build --mode gallery",
     "preview": "vite preview",
+    "preview:gallery": "vite preview --mode gallery --outDir dist-gallery",
     "format": "oxfmt"
   },
   "dependencies": {

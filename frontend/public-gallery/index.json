@@ -1,0 +1,332 @@
+{
+  "gallery_format_version": 1,
+  "generated_at": "2026-08-09T18:20:35.120990+00:00",
+  "model_name": "mlx-community/Llama-3.2-3B-Instruct-4bit",
+  "github_url": "https://github.com/gecheline/pollen",
+  "footer": {
+    "text": "Want to try this for yourself? Try the local version of pollen designed to run with Apple MLX and make your own pollinators, mix them etc.",
+    "cta": "Get pollen"
+  },
+  "sections": [
+    {
+      "id": "compare",
+      "title": "compare pollinators",
+      "cards": [
+        {
+          "id": "two-plus-two",
+          "title": "what's 2+2?",
+          "subtitle": "different answers to a straightforward question. is pollen even necessary here?",
+          "image": "cards/two-plus-two.png",
+          "layout": "toggle",
+          "show_mixed": false,
+          "lenses": [
+            {
+              "panel_id": "lens_0",
+              "lens_id": "scientist",
+              "name": "Scientist",
+              "system_prompt": "You are a rigorous scientist. You value precision, evidence, and intellectual honesty. You acknowledge uncertainty and complexity. You speak clearly but never oversimplify. Keep responses concise — 2 to 3 short paragraphs at most.",
+              "weight": 5
+            },
+            {
+              "panel_id": "lens_1",
+              "lens_id": "philosopher",
+              "name": "Philosopher",
+              "system_prompt": "You are a philosopher who explores ideas deeply. You question assumptions, examine concepts from multiple angles, and are comfortable sitting with uncertainty. You think in careful, structured arguments. Keep responses concise — 2 to 3 short paragraphs at most.",
+              "weight": 5
+            },
+            {
+              "panel_id": "lens_2",
+              "lens_id": "poet",
+              "name": "Poet",
+              "system_prompt": "You are a poet and creative writer. You think in images, metaphors, and emotional resonance. You find the felt sense of things, not just their surface meaning. Your language is alive. Keep responses concise — 2 to 3 short paragraphs at most.",
+              "weight": 5
+            },
+            {
+              "panel_id": "lens_3",
+              "lens_id": "skeptic",
+              "name": "Skeptic",
+              "system_prompt": "You are a critical skeptic. You question claims, look for alternative explanations, probe for weaknesses in arguments, and are resistant to being convinced unless the evidence is compelling. Keep responses concise — 2 to 3 short paragraphs at most.",
+              "weight": 5
+            },
+            {
+              "panel_id": "lens_4",
+              "lens_id": "naturalist",
+              "name": "Naturalist",
+              "system_prompt": "You are a naturalist who finds wisdom in the patterns of the natural world. You draw on ecological thinking, evolutionary biology, and deep time to understand phenomena. Keep responses concise — 2 to 3 short paragraphs at most.",
+              "weight": 5
+            }
+          ],
+          "turns": [
+            {
+              "index": 0,
+              "user_message": "what's 2+2?",
+              "combine_mode": "common_ground",
+              "weight_mode": "equal",
+              "panels": {
+                "baseline": "two-plus-two/turn0/baseline.json",
+                "lens_0": "two-plus-two/turn0/lens_0.json",
+                "lens_1": "two-plus-two/turn0/lens_1.json",
+                "lens_2": "two-plus-two/turn0/lens_2.json",
+                "lens_3": "two-plus-two/turn0/lens_3.json",
+                "lens_4": "two-plus-two/turn0/lens_4.json"
+              },
+              "n_tokens": {
+                "baseline": 8,
+                "lens_0": 56,
+                "lens_1": 68,
+                "lens_2": 41,
+                "lens_3": 42,
+                "lens_4": 55
+              }
+            }
+          ],
+          "bytes": 401575
+        },
+        {
+          "id": "war",
+          "title": "when did the war end?",
+          "subtitle": "specifying who answers a question will influence the answer maybe even more than you think. pick your pollinators but pick them wisely.",
+          "image": "cards/war.png",
+          "layout": "turns",
+          "show_mixed": false,
+          "lenses": [
+            {
+              "panel_id": "lens_0",
+              "lens_id": "historian",
+              "name": "Historian",
+              "system_prompt": "You're an expert in history and make sure all historical information is preserved and presented accurately. You hold all perspectives in mind when telling a historical story (not just the winning side) and you make it compelling for people to want to learn more about the events you talk about.",
+              "weight": 5
+            },
+            {
+              "panel_id": "lens_1",
+              "lens_id": "abraham-lincoln",
+              "name": "Abraham Lincoln",
+              "system_prompt": "You're Abraham Lincoln, you talk like him and bring the context of your lived experiences to how you answer questions.",
+              "weight": 5
+            }
+          ],
+          "turns": [
+            {
+              "index": 0,
+              "user_message": "when did the war end?",
+              "combine_mode": "common_ground",
+              "weight_mode": "equal",
+              "panels": {
+                "baseline": "war/turn0/baseline.json",
+                "lens_0": "war/turn0/lens_0.json",
+                "lens_1": "war/turn0/lens_1.json"
+              },
+              "n_tokens": {
+                "baseline": 91,
+                "lens_0": 104,
+                "lens_1": 143
+              }
+            },
+            {
+              "index": 1,
+              "user_message": "I meant World War II specifically, can you tell me more about it?",
+              "combine_mode": "common_ground",
+              "weight_mode": "equal",
+              "panels": {
+                "baseline": "war/turn1/baseline.json",
+                "lens_0": "war/turn1/lens_0.json",
+                "lens_1": "war/turn1/lens_1.json"
+              },
+              "n_tokens": {
+                "baseline": 180,
+                "lens_0": 180,
+                "lens_1": 180
+              }
+            }
+          ],
+          "bytes": 614985
+        }
+      ]
+    },
+    {
+      "id": "crosspollinate",
+      "title": "crosspollinate",
+      "cards": [
+        {
+          "id": "universe",
+          "title": "what's the nature of the universe?",
+          "subtitle": "what if we crosspolinated answers under the hood? does it change the answer?",
+          "image": "cards/universe.png",
+          "layout": "mixed_featured",
+          "show_mixed": true,
+          "lenses": [
+            {
+              "panel_id": "lens_0",
+              "lens_id": "scientist",
+              "name": "Scientist",
+              "system_prompt": "You are a rigorous scientist. You value precision, evidence, and intellectual honesty. You acknowledge uncertainty and complexity. You speak clearly but never oversimplify. Keep responses concise — 2 to 3 short paragraphs at most.",
+              "weight": 5
+            },
+            {
+              "panel_id": "lens_1",
+              "lens_id": "philosopher",
+              "name": "Philosopher",
+              "system_prompt": "You are a philosopher who explores ideas deeply. You question assumptions, examine concepts from multiple angles, and are comfortable sitting with uncertainty. You think in careful, structured arguments. Keep responses concise — 2 to 3 short paragraphs at most.",
+              "weight": 5
+            },
+            {
+              "panel_id": "lens_2",
+              "lens_id": "naturalist",
+              "name": "Naturalist",
+              "system_prompt": "You are a naturalist who finds wisdom in the patterns of the natural world. You draw on ecological thinking, evolutionary biology, and deep time to understand phenomena. Keep responses concise — 2 to 3 short paragraphs at most.",
+              "weight": 5
+            }
+          ],
+          "turns": [
+            {
+              "index": 0,
+              "user_message": "what's the nature of the universe?",
+              "combine_mode": "common_ground",
+              "weight_mode": "equal",
+              "panels": {
+                "baseline": "universe/turn0/baseline.json",
+                "lens_0": "universe/turn0/lens_0.json",
+                "lens_1": "universe/turn0/lens_1.json",
+                "lens_2": "universe/turn0/lens_2.json",
+                "mixed": "universe/turn0/mixed.json"
+              },
+              "n_tokens": {
+                "baseline": 217,
+                "lens_0": 198,
+                "lens_1": 209,
+                "lens_2": 201,
+                "mixed": 240
+              }
+            }
+          ],
+          "bytes": 1093573,
+          "explainer": "The word probabilities from each pollinators have been combined in a way that their agreement (common ground) is amplified. Wherever each pollinator shows higher probability for a word that word is more likely to be picked in the mixed answer."
+        },
+        {
+          "id": "art",
+          "title": "why is art important to humans?",
+          "subtitle": "will amplifying disagreement between divergent views make for a more compelling answer?",
+          "image": "cards/art.png",
+          "layout": "mixed_inline",
+          "show_mixed": true,
+          "lenses": [
+            {
+              "panel_id": "lens_0",
+              "lens_id": "poet",
+              "name": "Poet",
+              "system_prompt": "You are a poet and creative writer. You think in images, metaphors, and emotional resonance. You find the felt sense of things, not just their surface meaning. Your language is alive. Keep responses concise — 2 to 3 short paragraphs at most.",
+              "weight": 5
+            },
+            {
+              "panel_id": "lens_1",
+              "lens_id": "skeptic",
+              "name": "Skeptic",
+              "system_prompt": "You are a critical skeptic. You question claims, look for alternative explanations, probe for weaknesses in arguments, and are resistant to being convinced unless the evidence is compelling. Keep responses concise — 2 to 3 short paragraphs at most.",
+              "weight": 5
+            }
+          ],
+          "turns": [
+            {
+              "index": 0,
+              "user_message": "why is art important to humans?",
+              "combine_mode": "amplify",
+              "weight_mode": "equal",
+              "panels": {
+                "baseline": "art/turn0/baseline.json",
+                "lens_0": "art/turn0/lens_0.json",
+                "lens_1": "art/turn0/lens_1.json",
+                "mixed": "art/turn0/mixed.json"
+              },
+              "n_tokens": {
+                "baseline": 90,
+                "lens_0": 75,
+                "lens_1": 79,
+                "mixed": 90
+              }
+            },
+            {
+              "index": 1,
+              "user_message": "what does art mean to you?",
+              "combine_mode": "amplify",
+              "weight_mode": "equal",
+              "panels": {
+                "baseline": "art/turn1/baseline.json",
+                "lens_0": "art/turn1/lens_0.json",
+                "lens_1": "art/turn1/lens_1.json",
+                "mixed": "art/turn1/mixed.json"
+              },
+              "n_tokens": {
+                "baseline": 70,
+                "lens_0": 87,
+                "lens_1": 80,
+                "mixed": 73
+              }
+            },
+            {
+              "index": 2,
+              "user_message": "what's your favorite piece of art ever made?",
+              "combine_mode": "amplify",
+              "weight_mode": "equal",
+              "panels": {
+                "baseline": "art/turn2/baseline.json",
+                "lens_0": "art/turn2/lens_0.json",
+                "lens_1": "art/turn2/lens_1.json",
+                "mixed": "art/turn2/mixed.json"
+              },
+              "n_tokens": {
+                "baseline": 72,
+                "lens_0": 78,
+                "lens_1": 90,
+                "mixed": 48
+              }
+            },
+            {
+              "index": 3,
+              "user_message": "what about music, what's your favorite song ever?",
+              "combine_mode": "amplify",
+              "weight_mode": "equal",
+              "panels": {
+                "baseline": "art/turn3/baseline.json",
+                "lens_0": "art/turn3/lens_0.json",
+                "lens_1": "art/turn3/lens_1.json",
+                "mixed": "art/turn3/mixed.json"
+              },
+              "n_tokens": {
+                "baseline": 66,
+                "lens_0": 70,
+                "lens_1": 73,
+                "mixed": 84
+              }
+            },
+            {
+              "index": 4,
+              "user_message": "tell me something profound you've discovered through art",
+              "combine_mode": "amplify",
+              "weight_mode": "equal",
+              "panels": {
+                "baseline": "art/turn4/baseline.json",
+                "lens_0": "art/turn4/lens_0.json",
+                "lens_1": "art/turn4/lens_1.json",
+                "mixed": "art/turn4/mixed.json"
+              },
+              "n_tokens": {
+                "baseline": 58,
+                "lens_0": 73,
+                "lens_1": 62,
+                "mixed": 76
+              }
+            }
+          ],
+          "bytes": 1406267,
+          "explainer": "The word probabilities from each pollinator have been combined in a way that wherever one shows stark preference of a word over the other, that word is more likely to make it in the mixed answer.",
+          "panel_order": [
+            "baseline",
+            "mixed",
+            "lens_0",
+            "lens_1"
+          ]
+        }
+      ]
+    }
+  ]
+}

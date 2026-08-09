@@ -1,216 +1,295 @@
 #!/usr/bin/env python3
-"""bake_gallery.py — produce the static gallery: zero-cost, no backend
-required to view it.
+"""
+bake_gallery.py — turn saved captures into the static gallery payload.
 
-Reads a JSON config of prompt + lens-combination runs, plays each one
-through the real generator (same Pollinator, same generate_interleaved used
-live), and writes the exact frame sequence each run produced to
-frontend/public/gallery/<slug>.json, plus an index.
+Does NO generation. Reads gallery.manifest.json, loads the captures it points
+at, splits each capture's frame stream into one file per panel, and writes an
+index the gallery frontend reads. Fast and re-runnable: iterate on the manifest
+copy and re-bake without touching a model.
 
-The frame list recorded here is byte-for-byte the same shape as what
-main.py's SSE stream sends — a gallery "player" in the frontend just
-iterates an array instead of consuming an EventSource; it is not a second
-rendering path.
+Lives in src/pollen/ alongside build_assets.py, but reads and writes at repo
+level: captures/ for input, frontend/public-gallery/ for output. Both are found
+by walking up to the directory containing frontend/ and src/.
 
-Usage (from a source checkout, package installed with the `build` extra):
-    python -m pollen.bake_gallery --config gallery_config.json
-    python -m pollen.bake_gallery --config gallery_config.json --out ../frontend/public/gallery
+Output (default <repo>/frontend/public-gallery):
+
+    index.json
+    <card-id>/turn<N>/<panel-id>.json
+
+Usage:
+    python bake_gallery.py
+    python bake_gallery.py --cards art universe
+    python bake_gallery.py --out ../frontend/public-gallery
 """
 
 from __future__ import annotations
 
 import argparse
-import gc
 import json
+import shutil
 import sys
+from collections import defaultdict
+from datetime import datetime, timezone
 from pathlib import Path
 
-# _HERE is src/pollen/ — reaching the (unshipped, dev-only) frontend/ source
-# tree needs two levels up to the repo root, not one.
 _HERE = Path(__file__).resolve().parent
-DEFAULT_OUT = _HERE.parent.parent / "frontend" / "public" / "gallery"
-
-from . import session as session_module
-from .schemas import ChatRequest, with_length
 
 
-def log(msg: str) -> None:
-    print(f"  {msg}", flush=True)
+def _repo_root() -> Path:
+    """Walk up until we find the dir holding both frontend/ and src/.
+
+    This script lives inside the package (src/pollen/), but its inputs and
+    outputs are repo-level (captures/, frontend/public-gallery/). Searching
+    upward keeps it correct if the layout shifts again, instead of hardcoding
+    how many levels to climb.
+    """
+    for d in [_HERE, *_HERE.parents]:
+        if (d / "frontend").is_dir() and (d / "src").is_dir():
+            return d
+    return _HERE.parent.parent
 
 
-def _build_panel_configs(request: ChatRequest, sess: dict):
-    """Mirrors main.py's _build_panel_configs exactly — duplicated rather
-    than imported so this script has no dependency on the live server
-    module, and so session.py (carried over verbatim) doesn't need a new
-    export bolted onto it."""
-    baseline_config = {
-        "system_prompt": with_length("", request.length_hint),
-        "conversation": session_module.assemble_conversation(
-            sess, "baseline", None, request.user_message, request.history_mode
-        ),
-    }
+_ROOT = _repo_root()
+DEFAULT_MANIFEST = _HERE / "gallery.manifest.json"
+DEFAULT_OUT = _ROOT / "frontend" / "public-gallery"
+DEFAULT_CAPTURES = _ROOT / "captures"
 
-    lens_configs = []
-    for i, lens in enumerate(request.lenses):
-        panel_id = f"lens_{i}"
-        lens_configs.append(
-            {
-                "id": panel_id,
-                "system_prompt": with_length(lens.system_prompt, request.length_hint),
-                "conversation": session_module.assemble_conversation(
-                    sess, "lens", panel_id, request.user_message, request.history_mode
-                ),
-            }
-        )
-
-    mix_configs = None
-    if len(request.lenses) >= 2:
-        mixed_conversation = session_module.assemble_conversation(
-            sess, "mixed", None, request.user_message, request.history_mode
-        )
-        mix_configs = [
-            {
-                "id": f"lens_{i}",
-                "weight": lens.weight,
-                "system_prompt": with_length(lens.system_prompt, request.length_hint),
-                "conversation": mixed_conversation,
-            }
-            for i, lens in enumerate(request.lenses)
-        ]
-
-    return baseline_config, lens_configs, mix_configs
+GALLERY_FORMAT_VERSION = 1
 
 
-class _ModelSlot:
-    """At most one Pollinator resident at a time, same constraint as the
-    live model_registry — a batch run through several 4-bit models must not
-    hold two in memory simultaneously."""
-
-    def __init__(self):
-        self.model_name: str | None = None
-        self.pollinator = None
-        self.embedding_hash: str | None = None
-
-    def get(self, model_name: str):
-        if self.model_name == model_name:
-            return self.pollinator, self.embedding_hash
-
-        import hashlib
-
-        if self.pollinator is not None:
-            self.pollinator = None
-            gc.collect()
-            import mlx.core as mx
-
-            if hasattr(mx, "metal"):
-                mx.metal.clear_cache()
-
-        from .pollinator import Pollinator
-
-        log(f"loading {model_name} ...")
-        pollinator = Pollinator(model_name)
-        embedding_hash = hashlib.sha256(pollinator.embedding_matrix.tobytes()).hexdigest()[:16]
-
-        self.model_name = model_name
-        self.pollinator = pollinator
-        self.embedding_hash = embedding_hash
-        return pollinator, embedding_hash
+def die(msg: str) -> None:
+    print(f"ERROR: {msg}", file=sys.stderr)
+    sys.exit(1)
 
 
-def bake_run(run_spec: dict, slot: _ModelSlot, out_dir: Path) -> dict:
-    slug = run_spec["slug"]
-    request = ChatRequest(
-        session_id=f"gallery-{slug}",
-        user_message=run_spec["user_message"],
-        lenses=run_spec.get("lenses", []),
-        model_name=run_spec["model_name"],
-        combine_mode=run_spec.get("combine_mode", "common_ground"),
-        weight_mode=run_spec.get("weight_mode", "equal"),
-        history_mode=run_spec.get("history_mode", "only_mixed"),
-        max_new_tokens=run_spec.get("max_new_tokens", 600),
-        temperature=run_spec.get("temperature", 1.0),
-        length_hint=run_spec.get("length_hint", ""),
+def load_capture(path: Path) -> dict:
+    if not path.exists():
+        die(f"capture not found: {path}")
+    try:
+        return json.loads(path.read_text())
+    except json.JSONDecodeError as e:
+        die(f"capture is not valid JSON: {path}\n  {e}")
+
+
+def split_panels(capture: dict) -> dict[str, dict]:
+    """Frame stream -> one record per panel, as parallel arrays.
+
+    Parallel arrays rather than an array of objects: same information, smaller,
+    and it gzips better. Field presence follows the live SSE contract exactly —
+    baseline has no logRatio/kl, only mixed has dominantLensId — so a gallery
+    panel and a live panel feed the components identically.
+    """
+    panels: dict[str, dict] = defaultdict(
+        lambda: {
+            "tokens": [],
+            "token_ids": [],
+            "surprisal": [],
+            "logRatio": [],
+            "kl": [],
+            "dominantLensId": [],
+            "activations": [],
+            "text": "",
+        }
     )
 
-    pollinator, embedding_hash = slot.get(request.model_name)
-    sess = session_module.get_session(request.session_id)
-    baseline_config, lens_configs, mix_configs = _build_panel_configs(request, sess)
+    for frame in capture["frames"]:
+        ftype = frame.get("type")
+        if ftype == "token":
+            p = panels[frame["panel_id"]]
+            p["tokens"].append(frame.get("token", ""))
+            p["token_ids"].append(frame.get("token_id"))
+            p["surprisal"].append(frame.get("surprisal"))
+            p["activations"].append(frame.get("activations", []))
+            if "logRatio" in frame:
+                p["logRatio"].append(frame["logRatio"])
+            if "kl" in frame:
+                p["kl"].append(frame["kl"])
+            if "dominantLensId" in frame:
+                p["dominantLensId"].append(frame["dominantLensId"])
+        elif ftype == "panel_done":
+            panels[frame["panel_id"]]["text"] = frame.get("text", "")
 
-    log(f"generating {slug} ({request.model_name}) ...")
-    frames = list(
-        pollinator.generate_interleaved(
-            baseline_config=baseline_config,
-            lens_configs=lens_configs,
-            mix_configs=mix_configs,
-            combine_mode=request.combine_mode,
-            weight_mode=request.weight_mode,
-            max_new_tokens=request.max_new_tokens,
-            temperature=request.temperature,
-        )
-    )
-    frames.append({"type": "done"})
+    out = {}
+    for pid, p in panels.items():
+        rec = {
+            "panel_id": pid,
+            "n_tokens": len(p["tokens"]),
+            "tokens": p["tokens"],
+            "token_ids": p["token_ids"],
+            "surprisal": p["surprisal"],
+            "activations": p["activations"],
+            "text": p["text"],
+        }
+        # Only emit the trace fields that actually exist. Baseline legitimately
+        # has none — Panel.tsx flattens it itself, and sending zeros would make
+        # a real zero indistinguishable from an absent measurement.
+        if p["logRatio"]:
+            rec["logRatio"] = p["logRatio"]
+        if p["kl"]:
+            rec["kl"] = p["kl"]
+        if p["dominantLensId"]:
+            rec["dominantLensId"] = p["dominantLensId"]
+        out[pid] = rec
+    return out
 
-    record = {
-        "slug": slug,
-        "model_name": request.model_name,
-        "embedding_hash": embedding_hash,
-        "user_message": request.user_message,
-        "lenses": [lens.model_dump() for lens in request.lenses],
-        "combine_mode": request.combine_mode,
-        "weight_mode": request.weight_mode,
-        "history_mode": request.history_mode,
-        "length_hint": request.length_hint,
-        "frames": frames,
+
+def lens_meta(capture: dict) -> list[dict]:
+    """Panel id -> display name, for the rail. Custom lenses carry their own
+    system_prompt in the capture, so nothing needs a preset lookup."""
+    return [
+        {
+            "panel_id": f"lens_{i}",
+            "lens_id": lens["id"],
+            "name": lens["name"],
+            "system_prompt": lens.get("system_prompt", ""),
+            "weight": lens.get("weight", 1.0),
+        }
+        for i, lens in enumerate(capture["request"]["lenses"])
+    ]
+
+
+def bake_card(card: dict, captures_dir: Path, out_root: Path, manifest: dict) -> dict:
+    card_id = card["id"]
+    card_dir = out_root / card_id
+    if card_dir.exists():
+        shutil.rmtree(card_dir)
+    card_dir.mkdir(parents=True)
+
+    show_mixed = card.get("show_mixed", True)
+    turns_out = []
+    session_ids = set()
+    first_lenses = None
+    total_bytes = 0
+
+    for turn_index, turn in enumerate(card["turns"]):
+        cap_path = captures_dir / turn["capture"]
+        capture = load_capture(cap_path)
+        req = capture["request"]
+
+        if capture.get("embedding_hash") == "fixtures":
+            die(f"{card_id} turn {turn_index}: capture was made in fixtures mode "
+                f"and cannot be shipped ({turn['capture']})")
+
+        if capture.get("model_name") != manifest["model_name"]:
+            die(f"{card_id} turn {turn_index}: capture model {capture.get('model_name')!r} "
+                f"!= manifest model {manifest['model_name']!r} ({turn['capture']})")
+
+        session_ids.add(req.get("session_id"))
+
+        lenses = lens_meta(capture)
+        if first_lenses is None:
+            first_lenses = lenses
+        elif [l["lens_id"] for l in lenses] != [l["lens_id"] for l in first_lenses]:
+            die(f"{card_id} turn {turn_index}: lens set changes mid-conversation "
+                f"({turn['capture']}) — the rail would shift between turns")
+
+        panels = split_panels(capture)
+        if not show_mixed:
+            panels.pop("mixed", None)
+
+        turn_dir = card_dir / f"turn{turn_index}"
+        turn_dir.mkdir()
+
+        panel_files = {}
+        for pid, rec in panels.items():
+            fp = turn_dir / f"{pid}.json"
+            fp.write_text(json.dumps(rec, ensure_ascii=False, separators=(",", ":")))
+            panel_files[pid] = f"{card_id}/turn{turn_index}/{pid}.json"
+            total_bytes += fp.stat().st_size
+
+        turns_out.append({
+            "index": turn_index,
+            "user_message": req["user_message"],
+            "combine_mode": req.get("combine_mode"),
+            "weight_mode": req.get("weight_mode"),
+            "panels": panel_files,
+            "n_tokens": {pid: rec["n_tokens"] for pid, rec in panels.items()},
+        })
+
+    # Multi-turn cards must be one real conversation, or the follow-up button
+    # is stitching together unrelated runs while looking continuous.
+    if len(card["turns"]) > 1 and len(session_ids) > 1:
+        die(f"{card_id}: turns come from {len(session_ids)} different sessions — "
+            f"they are not a single conversation")
+
+    entry = {
+        "id": card_id,
+        "title": card["title"],
+        "subtitle": card["subtitle"],
+        "image": card.get("image"),
+        "layout": card["layout"],
+        "show_mixed": show_mixed,
+        "lenses": first_lenses,
+        "turns": turns_out,
+        "bytes": total_bytes,
     }
-
-    out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / f"{slug}.json"
-    with open(out_path, "w") as f:
-        json.dump(record, f)
-    log(f"wrote {out_path} ({len(frames)} frames)")
-
-    return {
-        "slug": slug,
-        "model_name": request.model_name,
-        "user_message": request.user_message,
-        "lens_names": [lens.name for lens in request.lenses],
-    }
+    for optional in ("explainer", "panel_order"):
+        if optional in card:
+            entry[optional] = card[optional]
+    return entry
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--config", required=True, help="JSON file listing gallery runs")
-    ap.add_argument("--out", default=None, help="output dir (default: ../frontend/public/gallery)")
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--manifest", default=None, help=f"default: {DEFAULT_MANIFEST.name}")
+    ap.add_argument("--out", default=None, help=f"default: {DEFAULT_OUT}")
+    ap.add_argument("--cards", nargs="+", default=None, help="bake only these card ids")
     args = ap.parse_args()
 
-    config_path = Path(args.config).resolve()
-    out_dir = Path(args.out).resolve() if args.out else DEFAULT_OUT
+    manifest_path = Path(args.manifest).resolve() if args.manifest else DEFAULT_MANIFEST
+    out_root = Path(args.out).resolve() if args.out else DEFAULT_OUT
+    if not manifest_path.exists():
+        die(f"manifest not found: {manifest_path}")
+    manifest = json.loads(manifest_path.read_text())
+    # captures_dir in the manifest is optional and, when given, is relative to
+    # the manifest. Default is the repo-root captures/ folder.
+    if manifest.get("captures_dir"):
+        captures_dir = (manifest_path.parent / manifest["captures_dir"]).resolve()
+    else:
+        captures_dir = DEFAULT_CAPTURES
+    if not captures_dir.is_dir():
+        die(f"captures directory not found: {captures_dir}")
 
-    runs = json.loads(config_path.read_text())
-    if isinstance(runs, dict):
-        runs = runs["runs"]
+    out_root.mkdir(parents=True, exist_ok=True)
 
-    slot = _ModelSlot()
-    index = []
-    failures = []
-    for i, run_spec in enumerate(runs, 1):
-        print(f"[{i}/{len(runs)}] {run_spec['slug']}")
-        try:
-            index.append(bake_run(run_spec, slot, out_dir))
-        except Exception as e:
-            log(f"FAILED: {e}")
-            failures.append((run_spec.get("slug", "?"), str(e)))
-        print()
+    sections_out = []
+    grand_total = 0
+    for section in manifest["sections"]:
+        cards_out = []
+        for card in section["cards"]:
+            if args.cards and card["id"] not in args.cards:
+                continue
+            print(f"  {section['id']}/{card['id']} ...", flush=True)
+            entry = bake_card(card, captures_dir, out_root, manifest)
+            grand_total += entry["bytes"]
+            print(f"      {len(entry['turns'])} turn(s), "
+                  f"{len(entry['lenses'])} pollinator(s), "
+                  f"{entry['bytes']/1024:.0f} KB")
+            cards_out.append(entry)
+        if cards_out:
+            sections_out.append({
+                "id": section["id"],
+                "title": section["title"],
+                "cards": cards_out,
+            })
 
-    with open(out_dir / "index.json", "w") as f:
-        json.dump({"runs": index}, f, indent=2)
-    print(f"Wrote {out_dir / 'index.json'} — {len(index)} run(s)")
+    # index.json is written last: a partial index pointing at files that
+    # aren't there is worse than no index at all.
+    index = {
+        "gallery_format_version": GALLERY_FORMAT_VERSION,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "model_name": manifest["model_name"],
+        "github_url": manifest.get("github_url"),
+        "footer": manifest.get("footer"),
+        "sections": sections_out,
+    }
+    (out_root / "index.json").write_text(json.dumps(index, ensure_ascii=False, indent=2))
 
-    if failures:
-        print("\nFailed:")
-        for slug, err in failures:
-            print(f"  {slug}: {err}")
-        return 1
+    print(f"\nWrote {out_root}")
+    print(f"  {sum(len(s['cards']) for s in sections_out)} cards, "
+          f"{grand_total/1_048_576:.2f} MB of panel data")
+    print("  Reminder: coords for this model must also be present in the gallery public dir.")
     return 0
 
 

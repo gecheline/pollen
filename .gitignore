@@ -6,19 +6,29 @@ __pycache__/
 build/
 dist/
 
-# Frontend dev tooling — never shipped, not needed by `pip install`
+# Frontend dev tooling — never shipped, not needed by pyinstaller or Vercel
 frontend/node_modules/
 frontend/dist/
+frontend/dist-gallery/
 
-# src/pollen/web/ (built frontend) and src/pollen/assets/ (vocab-map coords)
-# are deliberately NOT ignored: `uvx --from git+...` builds the wheel from
-# whatever's in the git checkout with no build step of its own, so the built
-# frontend has to be committed, not regenerated at install time. Rebuild it
-# with scripts/build_web.sh before committing when frontend/ changes.
+# src/pollen/web/ (built frontend), src/pollen/assets/ (vocab-map coords),
+# and frontend/public-gallery/ (baked gallery data) are deliberately NOT
+# ignored: neither pyinstaller (scripts/build_release.sh) nor the gallery's
+# Vercel build (pnpm run build:gallery) run any step that would regenerate
+# them — both just package whatever's already in the git checkout. Rebuild
+# the frontend ones with scripts/build_web.sh / pnpm run build:gallery
+# before committing when frontend/ changes; rebake the gallery data with
+# bake_gallery.py when captures/ changes.
 
 # Local-only, user-writable, never shipped
 .pollen/
 src/pollen/.asset_cache/
+
+# Raw source material for bake_gallery.py — draft/exploratory captures,
+# not meant to live in git history. frontend/public-gallery/ (the already-
+# baked output) is the committed source of truth; re-running the bake from
+# scratch needs these regenerated locally first.
+/captures/
 
 # Notebooks
 notebooks/.venv/

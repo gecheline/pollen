@@ -9,6 +9,7 @@
 // App.tsx owns it per panel id and passes the current value + setter to
 // both.
 
+import type { ReactNode } from 'react'
 import type * as d3 from 'd3'
 import type { PanelDef, PanelData, VocabPoint, VocabActivation, GenState, LensId } from '../types'
 import type { AxisLimits } from '../lib/mapLimits'
@@ -38,6 +39,12 @@ interface PanelTopProps {
   currentQuestion: string
   hover: Hover | null
   onHover: (h: Hover | null) => void
+  // Gallery-only (§6 of the gallery spec): an explanation of the scatter
+  // map itself, shown via an InfoButton pinned over its corner. Undefined
+  // (the default, and the only value the local app ever passes) renders
+  // the map exactly as it always has — nothing wraps it, nothing new
+  // mounts. Added as a prop rather than touching VocabMap.tsx itself.
+  mapInfo?: ReactNode
 }
 
 const MIXED_COLOR_DEEP_EXPLANATION =
@@ -59,6 +66,7 @@ export default function PanelTop({
   currentQuestion,
   hover,
   onHover,
+  mapInfo,
 }: PanelTopProps) {
   const { label, accent } = def
 
@@ -95,15 +103,34 @@ export default function PanelTop({
         <div style={{ height: 1, background: 'var(--hairline)', margin: '0 -12px' }} />
       </div>
 
-      <VocabMap
-        vocabPoints={vocabPoints}
-        mapLimits={mapLimits}
-        activations={activations}
-        revealCount={revealCount}
-        accent={accent}
-        genState={genState}
-        isDark={isDark}
-      />
+      {mapInfo ? (
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <VocabMap
+            vocabPoints={vocabPoints}
+            mapLimits={mapLimits}
+            activations={activations}
+            revealCount={revealCount}
+            accent={accent}
+            genState={genState}
+            isDark={isDark}
+          />
+          <div style={{ position: 'absolute', top: 6, right: 6 }}>
+            <InfoButton side="below" align="right" width={240}>
+              {mapInfo}
+            </InfoButton>
+          </div>
+        </div>
+      ) : (
+        <VocabMap
+          vocabPoints={vocabPoints}
+          mapLimits={mapLimits}
+          activations={activations}
+          revealCount={revealCount}
+          accent={accent}
+          genState={genState}
+          isDark={isDark}
+        />
+      )}
 
       {/* Answer — fills whatever space the map doesn't use. Past turns
           (oldest first) render as plain muted text above the live one;

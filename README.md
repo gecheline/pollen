@@ -25,7 +25,17 @@ pollen asks one question through several "lenses" — personas layered onto the 
 
 ## Gallery
 
-<!-- TODO: step C — link to the hosted gallery of curated runs -->
+<!-- TODO: link to the hosted gallery once it's deployed -->
+
+The gallery is a separate, public, no-backend build of the same frontend — four prebaked conversations someone can explore without installing anything, ending in a link back to this page. `PanelTop`/`PanelBottom`/`PullTrace`/`VocabMap`/`TokenText` are the exact same components the local app uses; only the data source and the shell around them differ (`frontend/src/GalleryApp.tsx` vs. `App.tsx`), selected at build time by Vite's `mode`, not a runtime branch — the packaged local app's bundle never even fetches `GalleryApp`'s code, and vice versa.
+
+```bash
+cd frontend
+pnpm install
+pnpm run build:gallery   # -> frontend/dist-gallery/, a static site, zero backend calls
+```
+
+Deploying (e.g. Vercel): root directory `frontend`, build command `pnpm run build:gallery` (not `npm run build` — this repo has no `package-lock.json`, only pnpm's lockfile, so an npm-based build command fails outright), output directory `dist-gallery`. Reads from `frontend/public-gallery/` (baked by `bake_gallery.py`, not covered here).
 
 ## Development
 
@@ -39,8 +49,8 @@ uvicorn pollen.main:app --reload --port 8000
 
 # terminal 2 — frontend, port 8443, proxies /api and /assets to :8000
 cd frontend
-npm install
-npm run dev
+pnpm install
+pnpm run dev
 ```
 
 The frontend only ever calls relative paths (`/api/...`, `/assets/...`) — never an absolute `localhost` URL — so the same code works unmodified whether Vite's dev proxy is in front of it or FastAPI is serving it directly in the packaged app.
