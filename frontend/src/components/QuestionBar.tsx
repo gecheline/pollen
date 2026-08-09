@@ -1,8 +1,12 @@
-// The question input, Generate, and New Chat — a full-width breaker
-// between every panel's answer text (above) and its trace (below), so
-// asking a question reads as the seam in the specimen sheet it actually
-// is, not a control buried in the top bar. Split out of TopBar.tsx, same
-// visual language (hairlines, Instrument Sans, uppercase 10px controls).
+// The question input, Submit, and New Chat — a full-width breaker between
+// every panel's answer text (above) and its trace (below), so asking a
+// question reads as the seam in the specimen sheet it actually is, not a
+// control buried in the top bar. Split out of TopBar.tsx, same visual
+// language (hairlines, Instrument Sans, uppercase controls).
+//
+// New Chat sits at the far left, deliberately apart from Submit at the far
+// right — a reset action and the primary action shouldn't be adjacent
+// enough to fat-finger one for the other.
 
 import type { GenState } from '../types'
 import type { ModelStatus } from './TopBar'
@@ -33,11 +37,17 @@ export default function QuestionBar({
   const canGenerate = genState !== 'generating' && modelStatus === 'ready'
   const canStartNewChat = genState !== 'generating' && hasConversation
 
+  const submit = () => {
+    if (!canGenerate) return
+    onGenerate()
+    setQuestion('')
+  }
+
   return (
     <div
       style={{
         flexShrink: 0,
-        height: 48,
+        height: 52,
         display: 'flex',
         alignItems: 'stretch',
         borderTop: '1px solid var(--hairline)',
@@ -45,26 +55,7 @@ export default function QuestionBar({
         background: 'var(--surface-raised)',
       }}
     >
-      <input
-        value={question}
-        onChange={e => setQuestion(e.target.value)}
-        onKeyDown={e => {
-          if (e.key === 'Enter' && canGenerate) onGenerate()
-        }}
-        placeholder="enter a question"
-        style={{
-          flex: 1,
-          border: 'none',
-          background: 'transparent',
-          outline: 'none',
-          padding: '0 16px',
-          fontFamily: 'Instrument Sans, sans-serif',
-          fontSize: 14,
-          color: 'var(--ink)',
-        }}
-      />
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '0 14px', flexShrink: 0, borderLeft: '1px solid var(--hairline)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', padding: '0 14px', flexShrink: 0, borderRight: '1px solid var(--hairline)' }}>
         <button
           onClick={onNewChat}
           disabled={!canStartNewChat}
@@ -83,17 +74,39 @@ export default function QuestionBar({
         >
           New chat
         </button>
+      </div>
+
+      <input
+        value={question}
+        onChange={e => setQuestion(e.target.value)}
+        onKeyDown={e => {
+          if (e.key === 'Enter') submit()
+        }}
+        placeholder="enter a question"
+        style={{
+          flex: 1,
+          border: 'none',
+          background: 'transparent',
+          outline: 'none',
+          padding: '0 16px',
+          fontFamily: 'Instrument Sans, sans-serif',
+          fontSize: 14,
+          color: 'var(--ink)',
+        }}
+      />
+
+      <div style={{ display: 'flex', alignItems: 'center', padding: '0 14px', flexShrink: 0, borderLeft: '1px solid var(--hairline)' }}>
         <button
-          onClick={onGenerate}
+          onClick={submit}
           disabled={!canGenerate}
           title={modelStatus === 'error' ? (modelError ?? undefined) : undefined}
           style={{
             background: 'none',
             border: '1px solid var(--hairline)',
             cursor: canGenerate ? 'pointer' : 'wait',
-            padding: '5px 12px',
+            padding: '9px 20px',
             fontFamily: 'Instrument Sans, sans-serif',
-            fontSize: 10,
+            fontSize: 12,
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
             color: canGenerate ? 'var(--ink)' : 'var(--ink-muted)',
@@ -102,7 +115,7 @@ export default function QuestionBar({
             transition: 'color 0.15s, border-color 0.15s',
           }}
         >
-          {genState === 'generating' ? 'Generating…' : modelStatus === 'loading' ? modelLoadingLabel : modelStatus === 'error' ? 'Model error' : 'Generate →'}
+          {genState === 'generating' ? 'Generating…' : modelStatus === 'loading' ? modelLoadingLabel : modelStatus === 'error' ? 'Model error' : 'Submit →'}
         </button>
       </div>
     </div>

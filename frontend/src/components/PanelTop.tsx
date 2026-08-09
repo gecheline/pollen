@@ -119,6 +119,7 @@ export default function PanelTop({
                 fontStyle: 'italic',
                 fontSize: narrow ? 10 : 11,
                 color: 'var(--ink-muted)',
+                textAlign: 'right',
               }}
             >
               {turn.question}
@@ -145,6 +146,7 @@ export default function PanelTop({
               fontStyle: 'italic',
               fontSize: narrow ? 10 : 11,
               color: 'var(--ink)',
+              textAlign: 'right',
             }}
           >
             {currentQuestion}
