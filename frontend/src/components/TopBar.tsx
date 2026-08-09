@@ -1,8 +1,7 @@
-// Top bar — brand, question input, model + length selects, Generate, panel
-// count, light/dark toggle. Moved out of App.tsx for hygiene; content and
-// behavior are unchanged from the Figma Make export (out of scope for the
-// visualization pass) except for the model select and loading/error state
-// added when the app was wired to a real backend.
+// Top bar — brand, model + length selects, panel count, Save, Trace, Dark.
+// The question input, Generate, and New Chat live in QuestionBar.tsx now,
+// as a full-width breaker between each panel's answer and its trace,
+// rather than here — see App.tsx's three-row layout.
 
 import { useEffect, useRef, useState } from 'react'
 import Label from './Label'
@@ -13,12 +12,9 @@ import { chooseSaveFolder, type CaptureResult } from '../lib/api'
 export type ModelStatus = 'loading' | 'ready' | 'error'
 
 interface TopBarProps {
-  question: string
-  setQuestion: (v: string) => void
   length: string
   setLength: (v: string) => void
   genState: GenState
-  onGenerate: () => void
   panelCount: number
   dark: boolean
   setDark: (v: boolean) => void
@@ -28,7 +24,6 @@ interface TopBarProps {
   selectedModelName: string | null
   onSelectModel: (modelName: string) => void
   modelStatus: ModelStatus
-  modelError: string | null
   modelLoadingLabel: string
   captureReady: boolean
   onSaveCapture: (slug: string, folder: string | null) => Promise<CaptureResult>
@@ -211,12 +206,9 @@ function SaveControl({
 }
 
 export default function TopBar({
-  question,
-  setQuestion,
   length,
   setLength,
   genState,
-  onGenerate,
   panelCount,
   dark,
   setDark,
@@ -226,12 +218,10 @@ export default function TopBar({
   selectedModelName,
   onSelectModel,
   modelStatus,
-  modelError,
   modelLoadingLabel,
   captureReady,
   onSaveCapture,
 }: TopBarProps) {
-  const canGenerate = genState !== 'generating' && modelStatus === 'ready'
   return (
     <div style={{ flexShrink: 0, height: 52, display: 'flex', alignItems: 'stretch', borderBottom: '1px solid var(--hairline)' }}>
       {/* Brand */}
@@ -249,25 +239,8 @@ export default function TopBar({
         <span style={{ fontSize: 9, letterSpacing: '0.20em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}>pollen</span>
       </div>
 
-      {/* Question input */}
-      <input
-        value={question}
-        onChange={e => setQuestion(e.target.value)}
-        placeholder="enter a question"
-        style={{
-          flex: 1,
-          border: 'none',
-          background: 'transparent',
-          outline: 'none',
-          padding: '0 16px',
-          fontFamily: 'Instrument Sans, sans-serif',
-          fontSize: 14,
-          color: 'var(--ink)',
-        }}
-      />
-
-      {/* Model + Length + Generate */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0 14px', flexShrink: 0, borderLeft: '1px solid var(--hairline)' }}>
+      {/* Model + Length */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 12, padding: '0 14px', flexShrink: 0 }}>
         <div>
           <Label style={{ marginBottom: 3 }}>Model</Label>
           {modelStatus === 'loading' ? (
@@ -293,27 +266,6 @@ export default function TopBar({
             <option>2 paragraphs</option>
           </select>
         </div>
-        <button
-          onClick={onGenerate}
-          disabled={!canGenerate}
-          title={modelStatus === 'error' ? (modelError ?? undefined) : undefined}
-          style={{
-            background: 'none',
-            border: '1px solid var(--hairline)',
-            cursor: canGenerate ? 'pointer' : 'wait',
-            padding: '5px 12px',
-            fontFamily: 'Instrument Sans, sans-serif',
-            fontSize: 10,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: canGenerate ? 'var(--ink)' : 'var(--ink-muted)',
-            borderRadius: 0,
-            whiteSpace: 'nowrap',
-            transition: 'color 0.15s, border-color 0.15s',
-          }}
-        >
-          {genState === 'generating' ? 'Generating…' : modelStatus === 'loading' ? modelLoadingLabel : modelStatus === 'error' ? 'Model error' : 'Generate →'}
-        </button>
       </div>
 
       {/* Panel count + mode toggle */}

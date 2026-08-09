@@ -8,6 +8,7 @@ import {
   streamChat,
   saveCapture,
   getDownloadStatus,
+  resetSession,
   type SSEFrame,
   type ChatRequest,
   type CaptureResult,
@@ -17,8 +18,11 @@ import { loadVocabMap, assertAssetsMatchModel, type ModelEntry } from './lib/loa
 import { buildTraceScales, buildSurprisalScale } from './lib/scales'
 import { MAP_LIMITS } from './lib/mapLimits'
 import TopBar, { type ModelStatus } from './components/TopBar'
+import QuestionBar from './components/QuestionBar'
 import LensRail from './components/LensRail'
-import Panel from './components/Panel'
+import PanelTop, { type TurnRecord } from './components/PanelTop'
+import PanelBottom from './components/PanelBottom'
+import type { Hover } from './components/hover'
 
 // ── Initial data ───────────────────────────────────────────────────────────────
 //
@@ -98,10 +102,6 @@ function formatModelLoadingLabel(status: DownloadStatus | null): string {
   return 'Loading model…'
 }
 
-// One id for the app's whole lifetime — the backend's session store keys
-// conversation history off this, so multi-turn generations stay coherent.
-const SESSION_ID = crypto.randomUUID()
-
 // UI labels the existing dropdowns already show (out of scope to redesign)
 // -> what the backend actually understands.
 const COMBINE_MODE_MAP: Record<string, string> = {
@@ -164,6 +164,11 @@ export default function App() {
   const [history, setHistory] = useState('Only mixed')
   const [traceVisible, setTraceVisible] = useState(true)
 
+  // One id per conversation, not per page load — New Chat rolls this so the
+  // backend's session store (which folds prior turns into every new prompt)
+  // starts clean rather than quietly continuing whatever came before.
+  const [sessionId, setSessionId] = useState(() => crypto.randomUUID())
+
   // Model bootstrap
   const [models, setModels] = useState<ModelEntry[]>([])
   const [selectedModelName, setSelectedModelName] = useState<string | null>(null)
@@ -194,6 +199,29 @@ export default function App() {
   const capturedFramesRef = useRef<SSEFrame[]>([])
   const capturedRequestRef = useRef<ChatRequest | null>(null)
   const [captureReady, setCaptureReady] = useState(false)
+
+  // Conversation history, shown inside each panel above its live turn.
+  // Keyed by the same semantic id every panel already uses (lens.id,
+  // 'baseline', 'mixed') — not the backend's positional lens_0/lens_1,
+  // which only identifies a slot within one request and can point at a
+  // different lens turn to turn if the active selection changes.
+  const [turnHistory, setTurnHistory] = useState<Record<string, TurnRecord[]>>({})
+  // The just-finished turn's completed answers, keyed positionally
+  // (backend panel_id) exactly as they arrive — archived into turnHistory
+  // (re-keyed to semantic ids) right before the *next* generation starts,
+  // not as each frame arrives, since only then do we know the turn is over
+  // and won't be overwritten by more tokens.
+  const completedTextsRef = useRef<Record<string, string>>({})
+  // The question that produced whatever's currently in apiPanels — distinct
+  // from the live `question` state, which may already hold new text the
+  // user typed before the previous turn finished archiving.
+  const askedQuestionRef = useRef('')
+
+  // Hover used to live inside one Panel component shared by its own text
+  // and trace halves; now that PanelTop/PanelBottom are siblings in
+  // separate rows, this owns one Hover per panel id and hands the value +
+  // a setter to both halves for that panel.
+  const [hoverByPanel, setHoverByPanel] = useState<Record<string, Hover | null>>({})
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark)
@@ -370,19 +398,53 @@ export default function App() {
         const max = Math.max(d.max, frame.surprisal)
         return min === d.min && max === d.max ? d : { min, max }
       })
+    } else if (frame.type === 'panel_done') {
+      // The exact backend-provided text for this panel's now-finished turn
+      // — archived into turnHistory (re-keyed to this panel's semantic id)
+      // right before the *next* generation starts, not here, since more
+      // panels may still be mid-stream.
+      completedTextsRef.current[frame.panel_id] = frame.text
     } else if (frame.type === 'error') {
       setGenerateError(frame.message)
     } else if (frame.type === 'done') {
       setGenState('complete')
     }
-    // 'panel_done' needs no handling — tokens already accumulated per-token.
+  }
+
+  // Files the just-finished turn (if any) into turnHistory before the next
+  // generation wipes apiPanels for it — uses askedQuestionRef (the question
+  // that produced the current panels) and activeGeneration's lensIds (this
+  // render's still-previous generation), not the live `question` state or
+  // a freshly-built lensIds, both of which may already reflect what's
+  // about to happen next.
+  function archiveCurrentTurn() {
+    const askedQuestion = askedQuestionRef.current
+    const completed = completedTextsRef.current
+    if (!askedQuestion || Object.keys(completed).length === 0) return
+
+    setTurnHistory(h => {
+      const next = { ...h }
+      const record = (semanticId: string, panelKey: string) => {
+        const answer = completed[panelKey]
+        if (!answer) return
+        next[semanticId] = [...(next[semanticId] ?? []), { question: askedQuestion, answer }]
+      }
+      record('baseline', 'baseline')
+      ;(activeGeneration?.lensIds ?? []).forEach((semanticId, i) => record(semanticId, `lens_${i}`))
+      record('mixed', 'mixed')
+      return next
+    })
   }
 
   async function handleGenerate() {
     if (genState === 'generating' || modelStatus !== 'ready') return
 
+    archiveCurrentTurn()
+    completedTextsRef.current = {}
+
     const active = lenses.filter(l => l.active)
     const lensIds = active.map(l => l.id)
+    askedQuestionRef.current = question
 
     const initialPanels: Record<string, PanelData> = { baseline: { kind: 'baseline', tokens: [] } }
     active.forEach((l, i) => {
@@ -393,6 +455,7 @@ export default function App() {
     setActiveGeneration({ lensIds })
     setApiPanels(initialPanels)
     setApiActivations({})
+    setHoverByPanel({})
     tokenCountersRef.current = {}
     setTraceDomain({ maxAbsLogRatio: 2, maxKl: 2 })
     setSurprisalDomain({ min: 0, max: 4 })
@@ -404,7 +467,7 @@ export default function App() {
 
     const lengthConfig = LENGTH_CONFIG[length] ?? LENGTH_CONFIG['2–3 sentences']
     const request: ChatRequest = {
-      session_id: SESSION_ID,
+      session_id: sessionId,
       user_message: question,
       lenses: active.map(l => ({ id: l.id, name: l.name, system_prompt: l.desc, weight: l.weight })),
       model_name: selectedModelName ?? undefined,
@@ -435,6 +498,31 @@ export default function App() {
     }
   }
 
+  // Clears the conversation only — session id, panel content, and turn
+  // history. Deliberately leaves lenses/combine/weightMode/history/length
+  // and the current question text untouched: those are workspace setup,
+  // not part of "this conversation."
+  function handleNewChat() {
+    if (genState === 'generating') return
+    resetSession(sessionId).catch(e => console.error('session reset failed', e)) // cleanup, not load-bearing
+    setSessionId(crypto.randomUUID())
+    setActiveGeneration(null)
+    setApiPanels({})
+    setApiActivations({})
+    setHoverByPanel({})
+    setTurnHistory({})
+    completedTextsRef.current = {}
+    askedQuestionRef.current = ''
+    tokenCountersRef.current = {}
+    setTraceDomain({ maxAbsLogRatio: 2, maxKl: 2 })
+    setSurprisalDomain({ min: 0, max: 4 })
+    setGenState('idle')
+    setGenerateError(null)
+    capturedFramesRef.current = []
+    capturedRequestRef.current = null
+    setCaptureReady(false)
+  }
+
   async function handleSaveCapture(slug: string, folder: string | null): Promise<CaptureResult> {
     if (!capturedRequestRef.current || capturedFramesRef.current.length === 0) {
       throw new Error('nothing to save yet')
@@ -444,15 +532,26 @@ export default function App() {
 
   const bannerMessage = modelError ?? generateError
 
+  // Computed once, shared by both the top-row and bottom-row passes below
+  // — same resolution either way, just rendered into two different rows
+  // now that PanelTop/PanelBottom are siblings instead of one component.
+  const resolvedPanels = panels.map(p => {
+    const backendId = resolveBackendPanelId(p, activeGeneration)
+    const hasData = Boolean(backendId && apiPanels[backendId])
+    const data = (backendId && apiPanels[backendId]) || stubPanelData(p)
+    const activations = (backendId && apiActivations[backendId]) || []
+    const panelGenState: GenState = hasData ? genState : 'idle'
+    return { def: p, data, activations, panelGenState }
+  })
+
+  const hasConversation = genState !== 'idle' || Object.keys(turnHistory).length > 0
+
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--surface)', color: 'var(--ink)', overflow: 'hidden' }}>
       <TopBar
-        question={question}
-        setQuestion={setQuestion}
         length={length}
         setLength={setLength}
         genState={genState}
-        onGenerate={handleGenerate}
         panelCount={panels.length}
         dark={dark}
         setDark={setDark}
@@ -462,7 +561,6 @@ export default function App() {
         selectedModelName={selectedModelName}
         onSelectModel={name => loadModel(name, models)}
         modelStatus={modelStatus}
-        modelError={modelError}
         modelLoadingLabel={formatModelLoadingLabel(downloadStatus)}
         captureReady={captureReady}
         onSaveCapture={handleSaveCapture}
@@ -495,33 +593,62 @@ export default function App() {
           setHistory={setHistory}
         />
 
-        <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', overflow: 'hidden' }}>
-          {panels.map(p => {
-            const backendId = resolveBackendPanelId(p, activeGeneration)
-            const hasData = Boolean(backendId && apiPanels[backendId])
-            const data = (backendId && apiPanels[backendId]) || stubPanelData(p)
-            const activations = (backendId && apiActivations[backendId]) || []
-            const panelGenState: GenState = hasData ? genState : 'idle'
-            return (
-              <Panel
-                key={p.id}
-                def={p}
+        {/* Answers — each panel's tag + map + text (including its own
+            conversation history). The question breaker and traces sit
+            below, outside the rail's column so the rail spans both. */}
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <div style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden' }}>
+            {resolvedPanels.map(({ def, data, activations, panelGenState }) => (
+              <PanelTop
+                key={def.id}
+                def={def}
                 data={data}
                 vocabPoints={vocabPoints}
                 mapLimits={mapLimits}
                 activations={activations}
                 genState={panelGenState}
                 revealCount={Infinity}
-                yScale={yScale}
-                thicknessScale={thicknessScale}
                 opacityScale={opacityScale}
                 lensAccents={lensAccents}
                 isDark={dark}
                 narrow={narrow}
-                traceVisible={traceVisible}
+                history={turnHistory[def.id] ?? []}
+                currentQuestion={askedQuestionRef.current}
+                hover={hoverByPanel[def.id] ?? null}
+                onHover={h => setHoverByPanel(prev => ({ ...prev, [def.id]: h }))}
               />
-            )
-          })}
+            ))}
+          </div>
+
+          <QuestionBar
+            question={question}
+            setQuestion={setQuestion}
+            genState={genState}
+            onGenerate={handleGenerate}
+            modelStatus={modelStatus}
+            modelError={modelError}
+            modelLoadingLabel={formatModelLoadingLabel(downloadStatus)}
+            onNewChat={handleNewChat}
+            hasConversation={hasConversation}
+          />
+
+          <div style={{ flexShrink: 0, display: 'flex', overflow: 'hidden' }}>
+            {resolvedPanels.map(({ def, data }) => (
+              <PanelBottom
+                key={def.id}
+                data={data}
+                accent={def.accent}
+                revealCount={Infinity}
+                yScale={yScale}
+                thicknessScale={thicknessScale}
+                lensAccents={lensAccents}
+                narrow={narrow}
+                traceVisible={traceVisible}
+                hover={hoverByPanel[def.id] ?? null}
+                onHover={h => setHoverByPanel(prev => ({ ...prev, [def.id]: h }))}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>

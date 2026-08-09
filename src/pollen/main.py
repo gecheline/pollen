@@ -300,8 +300,14 @@ def _build_panel_configs(request: ChatRequest, sess: dict):
             {
                 "id": panel_id,
                 "system_prompt": with_length(lens.system_prompt, request.length_hint),
+                # Keyed by lens.id (semantic: "poet"), not panel_id (positional:
+                # "lens_0") — panel_id only identifies *this request's* SSE
+                # stream slot. History has to survive the lens selection or
+                # order changing between turns in the same conversation, or a
+                # different lens silently inherits whichever one happened to
+                # sit at that index last time.
                 "conversation": session.assemble_conversation(
-                    sess, "lens", panel_id, request.user_message, request.history_mode
+                    sess, "lens", lens.id, request.user_message, request.history_mode
                 ),
             }
         )
@@ -330,9 +336,9 @@ def _build_panel_configs(request: ChatRequest, sess: dict):
 def _update_session_history(sess: dict, request: ChatRequest, panel_texts: dict[str, str]) -> None:
     sess["baseline_turns"].append({"user": request.user_message, "assistant": panel_texts.get("baseline", "")})
 
-    for i in range(len(request.lenses)):
-        panel_id = f"lens_{i}"
-        sess["lens_turns"].setdefault(panel_id, []).append(
+    for i, lens in enumerate(request.lenses):
+        panel_id = f"lens_{i}"  # panel_texts is keyed positionally (this request's SSE ids)
+        sess["lens_turns"].setdefault(lens.id, []).append(  # but stored history keys by the lens itself
             {"user": request.user_message, "assistant": panel_texts.get(panel_id, "")}
         )
 
