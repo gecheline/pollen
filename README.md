@@ -1,28 +1,27 @@
 # pollen
 
-```
-uvx --from git+https://github.com/gecheline/pollen pollen
-```
+**[Download the latest release →](https://github.com/gecheline/pollen/releases/latest)**
 
-That starts a local server and opens a browser tab. No Node.js, no manual setup.
+Download the DMG, drag `pollen.app` to Applications, double-click. No Python, no Node.js, no manual setup.
 
 ## Requirements
 
-- **Apple Silicon Mac** (M1 or later) — pollen runs models locally via MLX, which is Metal-only
-- **Python 3.10+**
+- **Apple Silicon Mac** (M1 or later), **macOS 14+** — pollen runs models locally via MLX, which is Metal-only
 - **~5GB free disk** per model, downloaded once on first use and cached by Hugging Face
 
-Everything else — [uv](https://docs.astral.sh/uv/)/`uvx`, the Python dependencies, the model weights — is handled for you.
+## macOS will warn you
+
+pollen isn't signed with an Apple Developer certificate, so macOS will say it can't verify the app. To open it: click Done on the warning, go to System Settings → Privacy & Security, scroll to the bottom, and click **Open Anyway**. You only need to do this once.
+
+## First run
+
+The first time you pick a model, pollen downloads it (a few GB, a few minutes depending on your connection) and shows real download progress — not a spinner. Every run after that is fast, because the download is cached on disk (`~/.cache/huggingface`) and reused.
 
 ## What it is
 
 pollen asks one question through several "lenses" — personas layered onto the same underlying model via system prompt — and shows, token by token, how much each lens's answer diverges from a plain baseline answer to the same question. Color is which lens; line weight is how surprising a word was to that lens; the ribbon's thickness is how far that lens's whole distribution over next words differed from the baseline's, not just the one word it picked.
 
 ![pollen: four panels comparing a baseline answer against Poet and Naturalist lenses and their blended Mixed panel, each with a vocabulary map and a divergence trace](docs/screenshot.jpg)
-
-## First run
-
-The first time you pick a model, pollen downloads it (a few GB, a few minutes depending on your connection) and shows real download progress — not a spinner. Every run after that is fast, because the download is cached on disk (`~/.cache/huggingface`) and reused.
 
 ## Gallery
 
@@ -46,11 +45,15 @@ npm run dev
 
 The frontend only ever calls relative paths (`/api/...`, `/assets/...`) — never an absolute `localhost` URL — so the same code works unmodified whether Vite's dev proxy is in front of it or FastAPI is serving it directly in the packaged app.
 
-Before a release, rebuild the frontend into the package and commit the result — `uvx --from git+...` builds straight from the git checkout with no build step of its own, so `src/pollen/web/` has to already be up to date in the repo:
+## Building a release
 
 ```bash
-./scripts/build_web.sh
+pip install -e ".[packaging]"   # PyInstaller
+brew install create-dmg
+./scripts/build_release.sh
 ```
+
+Builds the frontend, bundles a `pollen.app` with PyInstaller (Python + MLX + backend + built frontend, everything the app needs baked in — model weights are *not* bundled, they still download on first use), and wraps it into `dist/pollen-<version>.dmg`. Needs an Apple Silicon Mac — MLX is arm64-only, there's no cross-building this.
 
 ## Rebuilding assets
 

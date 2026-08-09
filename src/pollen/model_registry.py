@@ -24,10 +24,12 @@ import shutil
 import threading
 from pathlib import Path
 
-# Resolved against this file's location — src/pollen/assets/ ships inside
-# the installed package itself (committed, not generated at install time),
-# so this is correct whether running from a source checkout or a wheel.
-_HERE = Path(__file__).resolve().parent
+from .paths import resource_dir
+
+# src/pollen/assets/ ships inside the installed package itself (committed,
+# not generated at install time) — resource_dir() resolves correctly
+# whether running from a source checkout, a wheel, or a frozen .app bundle.
+_HERE = resource_dir()
 _MODELS_JSON = _HERE / "assets" / "models.json"
 
 # Mirrors mlx_lm.utils._download's default allow_patterns — not exported by

@@ -28,6 +28,9 @@ dependencies = [
 # Only build_assets.py (and bake_gallery.py, which reuses its cache) needs
 # these — a user running the shipped assets never installs this extra.
 build = ["scikit-learn>=1.4.0", "umap-learn>=0.5.6"]
+# Only scripts/build_release.sh (PyInstaller) needs this — never a runtime
+# dependency of the app itself, packaged or not.
+packaging = ["pyinstaller>=6.0"]
 
 [project.scripts]
 pollen = "pollen.cli:main"

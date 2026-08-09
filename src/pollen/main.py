@@ -27,11 +27,12 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import fixtures, model_registry, session
 from .lenses import PRESET_LENSES
+from .paths import resource_dir
 from .schemas import CaptureRequest, ChatRequest, ModelSwitchRequest, SessionResetRequest, with_length
 
 registry = model_registry.ModelRegistry()
 
-_HERE = Path(__file__).resolve().parent
+_HERE = resource_dir()
 ASSETS_DIR = _HERE / "assets"
 WEB_DIR = _HERE / "web"
 

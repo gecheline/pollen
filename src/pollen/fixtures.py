@@ -16,9 +16,10 @@ import time
 from pathlib import Path
 from typing import Iterator
 
+from .paths import resource_dir
 from .schemas import ChatRequest
 
-_HERE = Path(__file__).resolve().parent
+_HERE = resource_dir()
 _MODELS_JSON = _HERE / "assets" / "models.json"
 _FALLBACK_VOCAB_SIZE = 32000  # used only if models.json is missing or the model isn't listed
 
