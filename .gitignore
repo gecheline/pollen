@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+build/
+dist/
+
+# Frontend dev tooling — never shipped, not needed by `pip install`
+frontend/node_modules/
+frontend/dist/
+
+# src/pollen/web/ (built frontend) and src/pollen/assets/ (vocab-map coords)
+# are deliberately NOT ignored: `uvx --from git+...` builds the wheel from
+# whatever's in the git checkout with no build step of its own, so the built
+# frontend has to be committed, not regenerated at install time. Rebuild it
+# with scripts/build_web.sh before committing when frontend/ changes.
+
+# Local-only, user-writable, never shipped
+.pollen/
+src/pollen/.asset_cache/
+
+# Notebooks
+notebooks/.venv/
+notebooks/.ipynb_checkpoints/
+
+# OS
+.DS_Store

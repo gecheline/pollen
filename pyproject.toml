@@ -1,0 +1,48 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pollen"
+version = "0.1.0"
+description = "Compare how different lenses change an LLM's answer to one question, visualized as a flower grammar — local, Apple Silicon."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [{ name = "pollen" }]
+
+# Everything the packaged app needs to run against a real model. Kept
+# deliberately free of scikit-learn/umap-learn — those only exist to build
+# the vocab-map assets shipped inside the package, never to serve them; see
+# the `build` extra below.
+dependencies = [
+    "fastapi>=0.139",
+    "uvicorn[standard]>=0.51",
+    "numpy>=1.26",
+    "pydantic>=2.10",
+    "mlx>=0.32",
+    "mlx-lm>=0.31",
+]
+
+[project.optional-dependencies]
+# Only build_assets.py (and bake_gallery.py, which reuses its cache) needs
+# these — a user running the shipped assets never installs this extra.
+build = ["scikit-learn>=1.4.0", "umap-learn>=0.5.6"]
+
+[project.scripts]
+pollen = "pollen.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/pollen-app/pollen"
+
+[tool.hatch.build.targets.wheel]
+# `packages` sweeps the whole src/pollen/ directory tree as-is — every file
+# under it, not just *.py — which already covers assets/ (vocab-map coords)
+# and web/ (the built frontend) with no separate include rule needed. Both
+# are committed, generated-but-checked-in content, not artifacts of this
+# build itself; confirmed by inspecting the built wheel's file list (see
+# README's verification notes), not assumed.
+packages = ["src/pollen"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/pollen", "README.md", "LICENSE"]

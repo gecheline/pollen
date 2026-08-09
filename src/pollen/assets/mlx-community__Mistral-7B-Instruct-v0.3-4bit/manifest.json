@@ -1,0 +1,33 @@
+{
+  "asset_version": 2,
+  "model_name": "mlx-community/Mistral-7B-Instruct-v0.3-4bit",
+  "embedding_hash": "2b6eee22d297c452",
+  "vocab_size": 32768,
+  "embedding_dim": 4096,
+  "projection": {
+    "pca_dims": 50,
+    "pca_variance_explained": 0.0908,
+    "method": "umap",
+    "n_neighbors": 15,
+    "min_dist": 0.1,
+    "random_state": 42
+  },
+  "generated_at": "2026-08-08T22:50:51.102620+00:00",
+  "files": {
+    "coords": {
+      "path": "coords.u16.bin",
+      "format": "uint16le",
+      "layout": "interleaved xy, row index == token id",
+      "count": 32768,
+      "decode": "value / 65535 -> [0,1]",
+      "bytes": 131072
+    },
+    "tokens": {
+      "path": "tokens.json",
+      "format": "json array, index == token id",
+      "count": 32768,
+      "bytes": 297751,
+      "lazy": true
+    }
+  }
+}
