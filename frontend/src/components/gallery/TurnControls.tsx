@@ -1,10 +1,10 @@
-// Skip / replay, and "follow up" once a turn's reveal is done — the same
-// three controls every turn-based layout (turns, mixed_featured,
-// mixed_inline) needs below its panels, factored once rather than
-// tripled. "Someone comparing traces shouldn't have to sit through it
-// again" (spec §5) is why Skip exists at all; Replay is the same idea in
-// the other direction, for someone who wants to watch it again.
-
+// Split in two, not one control row at the bottom: Skip only matters while
+// something's still animating, and needs to be visible *before* a viewer
+// has scrolled past a tall card to find it — otherwise "skip the wait"
+// arrives only after most of the wait is already over. SkipControl renders
+// right below the title/explainer, above the panels. AfterTurnControls
+// (Replay, and Follow up once a turn's done) stays below the panels,
+// where "what's next" belongs.
 import type { CSSProperties } from 'react'
 
 const textControlStyle: CSSProperties = {
@@ -31,34 +31,37 @@ const primaryButtonStyle: CSSProperties = {
   color: 'var(--ink)',
 }
 
+export function SkipControl({ done, skip }: { done: boolean; skip: () => void }) {
+  if (done) return null
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <button onClick={skip} style={textControlStyle}>
+        Skip animation →
+      </button>
+    </div>
+  )
+}
+
 export default function TurnControls({
   done,
-  skip,
   replay,
   hasNext,
   onFollowUp,
   loadingNext,
 }: {
   done: boolean
-  skip: () => void
   replay: () => void
   hasNext: boolean
   onFollowUp: () => void
   loadingNext: boolean
 }) {
+  if (!done) return null
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '14px 2px 32px' }}>
-      {!done && (
-        <button onClick={skip} style={textControlStyle}>
-          Skip
-        </button>
-      )}
-      {done && (
-        <button onClick={replay} style={textControlStyle}>
-          Replay
-        </button>
-      )}
-      {done && hasNext && (
+      <button onClick={replay} style={textControlStyle}>
+        Replay
+      </button>
+      {hasNext && (
         <button onClick={onFollowUp} disabled={loadingNext} style={{ ...primaryButtonStyle, cursor: loadingNext ? 'wait' : 'pointer' }}>
           {loadingNext ? 'Loading…' : 'Follow up →'}
         </button>

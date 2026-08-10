@@ -17,7 +17,14 @@
 // and back on doesn't change resetKey, so it doesn't restart anything.
 import { useEffect, useState } from 'react'
 
-const MS_PER_TOKEN = 12 // spec: aim ~8-15ms/token; longest panel here is 240 tokens (< 3s)
+// Spec: aim ~8-15ms/token. Was 12ms, but VocabMap used to redraw its whole
+// ~130k-point dormant cloud on every single tick regardless of how little
+// had actually changed — with several panels animating at once (universe,
+// art) that dropped ticks under the render load and made 12ms/token feel
+// much slower than the number suggests. VocabMap now caches that layer and
+// only repaints the small activated-points layer per tick, so the bottom
+// of the spec's own range is sustainable rather than aspirational.
+const MS_PER_TOKEN = 8
 
 export function useReveal(maxTokens: number, resetKey: string | number | null) {
   const [revealCount, setRevealCount] = useState(resetKey === null ? maxTokens : 0)
