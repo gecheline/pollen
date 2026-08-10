@@ -18,13 +18,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useSkipAnimations } from './useSkipAnimations'
 
-// Was 8ms (sustainable once VocabMap/PullTrace stopped redoing O(n) work
-// per tick), then 22ms — still too close to "instant" to read as an
-// animation at all, especially on shorter answers where even 22ms/token
-// is over in a second or two. This is a deliberately slow, unmissable
-// typing pace, not a technical ceiling — Skip (GalleryQuestionBar) is
-// right there for anyone who doesn't want to watch it.
-const MS_PER_TOKEN = 200
+// Was 8ms, then 22ms (both too close to "instant" — turned out that was
+// masked by a Skip-animations bug that got stuck on and never turned back
+// off, see useSkipAnimations), then 200ms once that was fixed and the
+// ticker was actually visible — that read as genuinely slow rather than
+// deliberate. 25ms is the settled pace: a clearly-visible typing motion
+// without dragging. Skip (GalleryQuestionBar) is still right there for
+// anyone who'd rather not watch it.
+const MS_PER_TOKEN = 25
 
 export function useReveal(maxTokens: number, resetKey: string | number | null) {
   // "Skip animations" for the card currently open (see useSkipAnimations —
