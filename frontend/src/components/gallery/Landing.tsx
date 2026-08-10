@@ -12,29 +12,42 @@ import IntroSection from './Intro'
 
 const MOBILE_QUERY = '(max-width: 700px)'
 
-// Logo isn't made yet — a plain lettermark-shaped placeholder holds the spot
-// without pretending to be a real mark.
+// Reads /logo.png (frontend/public-gallery/logo.png) if it's there; falls
+// back to a plain lettermark-shaped placeholder if it 404s, same onError
+// pattern CardTile uses for card thumbnails — so this never needs a code
+// change again once the real logo is dropped in, and doesn't break if it's
+// ever removed.
 function Hero() {
+  const [imgFailed, setImgFailed] = useState(false)
   return (
     <div style={{ textAlign: 'center', padding: '40px 4px 44px' }}>
-      <div
-        style={{
-          width: 52,
-          height: 52,
-          margin: '0 auto 14px',
-          borderRadius: '50%',
-          border: '1px solid var(--hairline)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 8,
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
-          color: 'var(--ink-faint)',
-        }}
-      >
-        logo
-      </div>
+      {imgFailed ? (
+        <div
+          style={{
+            width: 52,
+            height: 52,
+            margin: '0 auto 14px',
+            borderRadius: '50%',
+            border: '1px solid var(--hairline)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 8,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: 'var(--ink-faint)',
+          }}
+        >
+          logo
+        </div>
+      ) : (
+        <img
+          src="/logo.png"
+          onError={() => setImgFailed(true)}
+          alt="pollen"
+          style={{ width: 52, height: 52, margin: '0 auto 14px', display: 'block', objectFit: 'contain' }}
+        />
+      )}
       <h1
         style={{
           margin: 0,
