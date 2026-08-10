@@ -1,10 +1,10 @@
-// Split in two, not one control row at the bottom: Skip only matters while
-// something's still animating, and needs to be visible *before* a viewer
-// has scrolled past a tall card to find it — otherwise "skip the wait"
-// arrives only after most of the wait is already over. SkipControl renders
-// right below the title/explainer, above the panels. AfterTurnControls
-// (Replay, and Follow up once a turn's done) stays below the panels,
-// where "what's next" belongs.
+// "Skip this one reveal" used to live here as its own per-card control
+// (SkipControl, above the panels). It's now a single persistent "Skip
+// animations" toggle in the gallery header (see useSkipAnimations) instead —
+// once on, every reveal on every card starts already complete until it's
+// turned back off, so a per-card one-off control would just be a second,
+// redundant way to do the same thing. What's left here is only the
+// after-a-reveal controls: Replay, and Follow up once a turn's done.
 import type { CSSProperties } from 'react'
 
 const textControlStyle: CSSProperties = {
@@ -29,17 +29,6 @@ const primaryButtonStyle: CSSProperties = {
   letterSpacing: '0.1em',
   textTransform: 'uppercase',
   color: 'var(--ink)',
-}
-
-export function SkipControl({ done, skip }: { done: boolean; skip: () => void }) {
-  if (done) return null
-  return (
-    <div style={{ marginBottom: 14 }}>
-      <button onClick={skip} style={textControlStyle}>
-        Skip animation →
-      </button>
-    </div>
-  )
 }
 
 export default function TurnControls({

@@ -8,6 +8,7 @@
 import { useEffect, useState } from 'react'
 import { loadGalleryIndex, type GalleryIndex, type GalleryCard } from './lib/gallery'
 import { useTheme } from './lib/useTheme'
+import { useSkipAnimations } from './lib/useSkipAnimations'
 import Landing from './components/gallery/Landing'
 import CardView from './components/gallery/CardView'
 
@@ -20,6 +21,7 @@ function viewFromLocation(): View {
 
 export default function GalleryApp() {
   const { dark, toggle } = useTheme()
+  const { skip: skipAnimations, toggle: toggleSkipAnimations } = useSkipAnimations()
   const [index, setIndex] = useState<GalleryIndex | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [view, setView] = useState<View>(() => viewFromLocation())
@@ -109,21 +111,39 @@ export default function GalleryApp() {
         >
           pollen
         </button>
-        <button
-          onClick={toggle}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: 0,
-            fontSize: 9,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            color: 'var(--ink-muted)',
-          }}
-        >
-          {dark ? '◑ Light' : '◐ Dark'}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+          <button
+            onClick={toggleSkipAnimations}
+            title="Applies to every card, until turned off again"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+              fontSize: 9,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              color: skipAnimations ? 'var(--ink)' : 'var(--ink-muted)',
+            }}
+          >
+            {skipAnimations ? '✓ Skip animations' : 'Skip animations'}
+          </button>
+          <button
+            onClick={toggle}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+              fontSize: 9,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              color: 'var(--ink-muted)',
+            }}
+          >
+            {dark ? '◑ Light' : '◐ Dark'}
+          </button>
+        </div>
       </header>
 
       {loadError && (

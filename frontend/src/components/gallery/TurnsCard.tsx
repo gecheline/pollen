@@ -8,7 +8,7 @@ import { SCATTER_INFO_TEXT } from './CardView'
 import { useGalleryTurns, panelText } from '../../lib/useGalleryTurns'
 import { buildPanelDefs, buildLensAccents } from './panelDefs'
 import PanelGrid, { type GridPanel } from './PanelGrid'
-import TurnControls, { SkipControl } from './TurnControls'
+import TurnControls from './TurnControls'
 
 export default function TurnsCard({ card, vocabPoints, mapLimits, isDark }: LayoutProps) {
   const { completed, current, reveal, hasNext, followUp, replay, loadingNext } = useGalleryTurns(card)
@@ -29,7 +29,6 @@ export default function TurnsCard({ card, vocabPoints, mapLimits, isDark }: Layo
 
   return (
     <div>
-      <SkipControl done={reveal.done} skip={reveal.skip} />
       <PanelGrid panels={panels} vocabPoints={vocabPoints} mapLimits={mapLimits} isDark={isDark} lensAccents={lensAccents} mapInfo={SCATTER_INFO_TEXT} />
       <TurnControls done={reveal.done} replay={replay} hasNext={hasNext} onFollowUp={followUp} loadingNext={loadingNext} />
     </div>

@@ -16,6 +16,7 @@
 // toggled on, and keeps passing that same id forever after — toggling off
 // and back on doesn't change resetKey, so it doesn't restart anything.
 import { useEffect, useState } from 'react'
+import { useSkipAnimations } from './useSkipAnimations'
 
 // Spec: aim ~8-15ms/token. Was 12ms, but VocabMap used to redraw its whole
 // ~130k-point dormant cloud on every single tick regardless of how little
@@ -27,10 +28,15 @@ import { useEffect, useState } from 'react'
 const MS_PER_TOKEN = 8
 
 export function useReveal(maxTokens: number, resetKey: string | number | null) {
-  const [revealCount, setRevealCount] = useState(resetKey === null ? maxTokens : 0)
+  // Global, persisted "skip animations" preference (see useSkipAnimations) —
+  // in the deps array below (unlike maxTokens) so flipping it on mid-reveal
+  // completes whatever's currently ticking immediately, not just future
+  // reveals.
+  const { skip: skipAll } = useSkipAnimations()
+  const [revealCount, setRevealCount] = useState(resetKey === null || skipAll ? maxTokens : 0)
 
   useEffect(() => {
-    if (resetKey === null) {
+    if (resetKey === null || skipAll) {
       setRevealCount(maxTokens)
       return
     }
@@ -49,7 +55,7 @@ export function useReveal(maxTokens: number, resetKey: string | number | null) {
     }, MS_PER_TOKEN)
     return () => clearInterval(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resetKey])
+  }, [resetKey, skipAll])
 
   return {
     revealCount,

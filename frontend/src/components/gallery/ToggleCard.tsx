@@ -14,7 +14,6 @@ import { loadPanelFile } from '../../lib/gallery'
 import { useReveal } from '../../lib/useReveal'
 import { buildPanelDefs, buildLensAccents } from './panelDefs'
 import PanelGrid, { type GridPanel } from './PanelGrid'
-import { SkipControl } from './TurnControls'
 import { SCATTER_INFO_TEXT } from './CardView'
 import type { PanelData, VocabActivation } from '../../types'
 
@@ -74,16 +73,6 @@ export default function ToggleCard({ card, vocabPoints, mapLimits, isDark }: Lay
     panels.push({ def: defs.lenses[lens.panel_id], ...loaded[lens.panel_id], revealCount: lensReveals[i].revealCount })
   })
 
-  // No single shared ticker here (each panel reveals independently, on its
-  // own toggle) — "done" and "skip" cover whatever's currently visible and
-  // still animating, not the whole card at once.
-  const visibleLensReveals = card.lenses.map((lens, i) => lensReveals[i]).filter((_, i) => visible.has(card.lenses[i].panel_id))
-  const allDone = baselineReveal.done && visibleLensReveals.every(r => r.done)
-  const skipAll = () => {
-    baselineReveal.skip()
-    visibleLensReveals.forEach(r => r.skip())
-  }
-
   return (
     <div>
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 18 }}>
@@ -129,7 +118,6 @@ export default function ToggleCard({ card, vocabPoints, mapLimits, isDark }: Lay
         })}
       </div>
 
-      <SkipControl done={allDone} skip={skipAll} />
       <PanelGrid panels={panels} vocabPoints={vocabPoints} mapLimits={mapLimits} isDark={isDark} lensAccents={lensAccents} mapInfo={SCATTER_INFO_TEXT} />
     </div>
   )
