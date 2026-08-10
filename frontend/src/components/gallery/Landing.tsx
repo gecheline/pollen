@@ -118,19 +118,19 @@ export default function Landing({ index, onOpenCard }: { index: GalleryIndex; on
           display: 'grid',
           gridTemplateColumns: !isMobile && index.sections.length > 1 ? '1fr 1fr' : '1fr',
           gap: 0,
-          border: '1px solid var(--hairline)',
+          border: '1px solid var(--ink-faint)',
         }}
       >
         {index.sections.map((section, i) => (
           <div
             key={section.id}
             style={{
-              borderLeft: !isMobile && i > 0 ? '1px solid var(--hairline)' : 'none',
-              borderTop: isMobile && i > 0 ? '1px solid var(--hairline)' : 'none',
+              borderLeft: !isMobile && i > 0 ? '1px solid var(--ink-faint)' : 'none',
+              borderTop: isMobile && i > 0 ? '1px solid var(--ink-faint)' : 'none',
               padding: 24,
             }}
           >
-            <div style={{ fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 16 }}>
+            <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-muted)', marginBottom: 16 }}>
               {section.title}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16 }}>
