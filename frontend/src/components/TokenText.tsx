@@ -6,7 +6,11 @@
 // emphasized words — the same ones surprisal already pushes to full
 // opacity — toward its own accent, reusing that exact opacity signal as
 // the tint strength rather than introducing a second metric. Baseline has
-// no accent worth popping toward, so it stays plain ink regardless.
+// no accent worth popping toward, so it stays plain ink regardless. The
+// genuine standouts (top of that same tint range) also go bold — a second,
+// coarser cue on top of the continuous color/opacity ones, reserved for a
+// minority of words on purpose: bolding everything the tint touches would
+// just make the passage heavier, not more legible.
 //
 // Rendered as real DOM spans (not canvas) so the answer stays selectable and
 // copyable, per spec.
@@ -31,6 +35,12 @@ interface TokenTextProps {
 // 100% swap so a run of standout words still reads as text, not a wash of
 // solid color.
 const MAX_LENS_TINT = 0.65
+
+// Bold kicks in only for the top slice of that same tint range — most
+// tokens get some tint (surprisal is rarely exactly at the domain
+// floor), but bolding all of them would read as "the whole panel is
+// bold," not "these particular words are."
+const BOLD_TINT_THRESHOLD = 0.6
 
 export default function TokenText({
   tokens,
@@ -60,6 +70,7 @@ export default function TokenText({
         const lensId = dominantLensIds?.[i]
         const opacity = opacityScale(t.surprisal)
         let color = 'var(--ink)'
+        let bold = false
         if (lensId && lensAccents) {
           // Mixed panel: color is lens identity, full stop — unaffected by
           // this token's own surprisal.
@@ -69,6 +80,7 @@ export default function TokenText({
           // fall through to plain ink instead).
           const tint = opacityMax > opacityMin ? (opacity - opacityMin) / (opacityMax - opacityMin) : 0
           if (tint > 0) color = `color-mix(in srgb, ${accent} ${Math.round(tint * MAX_LENS_TINT * 100)}%, var(--ink))`
+          bold = tint > BOLD_TINT_THRESHOLD
         }
         return (
           <span
@@ -78,6 +90,7 @@ export default function TokenText({
             style={{
               color,
               opacity,
+              fontWeight: bold ? 700 : 400,
               background: hoveredTokenIndex === i ? 'color-mix(in srgb, var(--ink) 10%, transparent)' : 'transparent',
               transition: 'background 0.1s',
             }}

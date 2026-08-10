@@ -18,9 +18,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { useSkipAnimations } from './useSkipAnimations'
 
-// Spec: aim ~8-15ms/token, expressed here as a rate rather than a fixed
-// per-tick delay — see the requestAnimationFrame loop below for why.
-const MS_PER_TOKEN = 8
+// Was 8ms — sustainable now that VocabMap/PullTrace don't redo O(n) work
+// per tick, but "sustainable" turned out to mean "instant": a ~150-token
+// answer finished revealing in about a second, which read as no animation
+// at all rather than a fast one. This is a deliberately-visible typing
+// pace, not a technical ceiling — Skip (GalleryQuestionBar) is right there
+// for anyone who doesn't want to watch it.
+const MS_PER_TOKEN = 22
 
 export function useReveal(maxTokens: number, resetKey: string | number | null) {
   // Global, persisted "skip animations" preference (see useSkipAnimations) —

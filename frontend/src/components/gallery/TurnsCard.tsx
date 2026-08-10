@@ -17,6 +17,13 @@ export default function TurnsCard({ card, vocabPoints, mapLimits, isDark }: Layo
 
   if (!current) return <p style={{ fontSize: 11, color: 'var(--ink-faint)' }}>Loading…</p>
 
+  // The breaker mirrors the local app's own input box: whatever you'd
+  // submit next, not whatever's currently answered above. Once there's no
+  // next turn, there's nothing to preview — fall back to the last-asked
+  // question so the slot isn't empty, dimmed via questionActive to read as
+  // leftover rather than a live prompt.
+  const nextQuestion = hasNext ? card.turns[current.turnIndex + 1].user_message : current.question
+
   const order = ['baseline', ...card.lenses.map(l => l.panel_id)] // no mixed, per spec
   const panels: GridPanel[] = order.map(panelId => ({
     def: panelId === 'baseline' ? defs.baseline : defs.lenses[panelId],
@@ -36,7 +43,15 @@ export default function TurnsCard({ card, vocabPoints, mapLimits, isDark }: Layo
       lensAccents={lensAccents}
       mapInfo={SCATTER_INFO_TEXT}
       breaker={
-        <GalleryQuestionBar question={current.question} done={reveal.done} replay={replay} hasNext={hasNext} onFollowUp={followUp} loadingNext={loadingNext} />
+        <GalleryQuestionBar
+          question={nextQuestion}
+          questionActive={hasNext}
+          done={reveal.done}
+          replay={replay}
+          hasNext={hasNext}
+          onFollowUp={followUp}
+          loadingNext={loadingNext}
+        />
       }
     />
   )

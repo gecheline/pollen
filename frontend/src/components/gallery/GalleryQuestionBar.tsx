@@ -7,6 +7,14 @@
 // deliberately apart from the primary action); Replay and Follow up sit
 // where Submit sits (far right).
 //
+// The middle slot mirrors what the local app's own input box always held:
+// whatever you'd submit *next*, not whatever's currently being answered
+// above — so the caller passes the upcoming turn's question when there is
+// one, not the current turn's. When there isn't (no more turns, or the
+// toggle layout's single turn with no follow-up concept at all),
+// `questionActive: false` dims it to read as leftover text, not a live
+// prompt.
+//
 // Persisted, not per-turn: "Skip animations" flips the same global
 // preference every useReveal ticker already watches (see
 // useSkipAnimations), so it also completes whatever's revealing right now
@@ -44,6 +52,10 @@ const primaryButtonStyle: CSSProperties = {
 
 export interface GalleryQuestionBarProps {
   question: string
+  // Defaults to true (a live "here's what's next" preview). Pass false
+  // when `question` is just the last-asked question standing in for
+  // "nothing to preview" — see the file comment above.
+  questionActive?: boolean
   done: boolean
   // Toggle cards have no single "replay the whole thing" or "next turn"
   // concept (each lens reveals independently, on its own toggle, and
@@ -56,7 +68,15 @@ export interface GalleryQuestionBarProps {
   loadingNext?: boolean
 }
 
-export default function GalleryQuestionBar({ question, done, replay, hasNext, onFollowUp, loadingNext }: GalleryQuestionBarProps) {
+export default function GalleryQuestionBar({
+  question,
+  questionActive = true,
+  done,
+  replay,
+  hasNext,
+  onFollowUp,
+  loadingNext,
+}: GalleryQuestionBarProps) {
   const { setSkip } = useSkipAnimations()
 
   return (
@@ -84,7 +104,8 @@ export default function GalleryQuestionBar({ question, done, replay, hasNext, on
             fontFamily: "'Lora', Georgia, serif",
             fontStyle: 'italic',
             fontSize: 13,
-            color: 'var(--ink-muted)',
+            color: questionActive ? 'var(--ink-muted)' : 'var(--ink-faint)',
+            opacity: questionActive ? 1 : 0.75,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',

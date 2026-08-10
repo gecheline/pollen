@@ -128,7 +128,7 @@ export default function ToggleCard({ card, vocabPoints, mapLimits, isDark }: Lay
         isDark={isDark}
         lensAccents={lensAccents}
         mapInfo={SCATTER_INFO_TEXT}
-        breaker={<GalleryQuestionBar question={turn.user_message} done={allDone} />}
+        breaker={<GalleryQuestionBar question={turn.user_message} questionActive={false} done={allDone} />}
       />
     </div>
   )

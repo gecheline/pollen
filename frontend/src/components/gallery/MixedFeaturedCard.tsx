@@ -21,6 +21,11 @@ export default function MixedFeaturedCard({ card, vocabPoints, mapLimits, isDark
 
   if (!current) return <p style={{ fontSize: 11, color: 'var(--ink-faint)' }}>Loading…</p>
 
+  // See TurnsCard for why this is the *next* turn's question, not the
+  // current one — falls back to the current (last) question, dimmed via
+  // questionActive, once there's nothing left to preview.
+  const nextQuestion = hasNext ? card.turns[current.turnIndex + 1].user_message : current.question
+
   const buildPanel = (panelId: string): GridPanel => ({
     def: panelId === 'baseline' ? defs.baseline : panelId === 'mixed' ? defs.mixed : defs.lenses[panelId],
     data: current.panels[panelId],
@@ -44,7 +49,15 @@ export default function MixedFeaturedCard({ card, vocabPoints, mapLimits, isDark
         lensAccents={lensAccents}
         mapInfo={SCATTER_INFO_TEXT}
         breaker={
-          <GalleryQuestionBar question={current.question} done={reveal.done} replay={replay} hasNext={hasNext} onFollowUp={followUp} loadingNext={loadingNext} />
+          <GalleryQuestionBar
+            question={nextQuestion}
+            questionActive={hasNext}
+            done={reveal.done}
+            replay={replay}
+            hasNext={hasNext}
+            onFollowUp={followUp}
+            loadingNext={loadingNext}
+          />
         }
       />
     </>
