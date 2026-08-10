@@ -29,12 +29,32 @@ const MS_PER_TOKEN = 25
 
 export function useReveal(maxTokens: number, resetKey: string | number | null) {
   // "Skip animations" for the card currently open (see useSkipAnimations —
-  // scoped to one CardView, not persisted) — in the deps array below
-  // (unlike maxTokens) so flipping it on mid-reveal completes whatever's
-  // currently ticking immediately, not just this turn's future reveals.
+  // scoped to one CardView, not persisted) — read during render (not just
+  // the effect's deps) because the render-phase reset below needs its
+  // current value too.
   const { skip: skipAll } = useSkipAnimations()
-  const [revealCount, setRevealCount] = useState(resetKey === null || skipAll ? maxTokens : 0)
+  const [revealCount, setRevealCount] = useState(() => (resetKey === null || skipAll ? maxTokens : 0))
   const rafRef = useRef<number | null>(null)
+
+  // Track which resetKey `revealCount` actually belongs to, and correct it
+  // *during render* the moment resetKey changes — not in an effect. An
+  // effect-based reset was the real bug behind "shows the whole answer,
+  // then wipes it": on a Follow Up, `current` (and so resetKey and
+  // maxTokens) update in one React state batch, but `revealCount` is a
+  // separate piece of state that doesn't get reset until the effect below
+  // runs *after* that render has already committed and painted — so the
+  // new turn's first frame briefly showed the *previous* turn's leftover
+  // revealCount applied to the *new* turn's tokens (min(newTokens.length,
+  // oldRevealCount), often "most or all of it" since a just-finished turn's
+  // revealCount sits at its own full length) before snapping back to 0.
+  // Calling setState during render is React's own sanctioned pattern for
+  // this exact case — it discards the render and retries immediately with
+  // the corrected value, so nothing ever paints the stale combination.
+  const trackedKeyRef = useRef(resetKey)
+  if (resetKey !== trackedKeyRef.current) {
+    trackedKeyRef.current = resetKey
+    setRevealCount(resetKey === null || skipAll ? maxTokens : 0)
+  }
 
   useEffect(() => {
     if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
