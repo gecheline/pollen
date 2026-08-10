@@ -35,7 +35,7 @@ pnpm install
 pnpm run build:gallery   # -> frontend/dist-gallery/, a static site, zero backend calls
 ```
 
-Deploying (e.g. Vercel): root directory `frontend`, build command `pnpm run build:gallery` (not `npm run build` — this repo has no `package-lock.json`, only pnpm's lockfile, so an npm-based build command fails outright), output directory `dist-gallery`. Reads from `frontend/public-gallery/` (baked by `bake_gallery.py`, not covered here).
+Deploying on Vercel: import this repo, set **Root Directory** to `frontend` — everything else (`pnpm install`, `pnpm run build:gallery`, output dir `dist-gallery`) is pinned in `frontend/vercel.json` so it doesn't need to be typed into the dashboard, and doesn't silently drift to `npm run build` (this repo has no `package-lock.json`, only pnpm's lockfile — an npm-based build fails outright). No env vars or serverless functions needed; it's a fully static site. Reads from `frontend/public-gallery/` (baked by `bake_gallery.py`, not covered here).
 
 ## Development
 
