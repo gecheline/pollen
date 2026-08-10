@@ -18,6 +18,15 @@ function viewFromLocation(): View {
   return cardId ? { kind: 'card', cardId } : { kind: 'landing' }
 }
 
+// Same /logo.png + onError fallback pattern as Landing.tsx's Hero — small
+// enough here (18px) that the fallback is just omitting the mark, not a
+// placeholder box.
+function HeaderLogo() {
+  const [failed, setFailed] = useState(false)
+  if (failed) return null
+  return <img src="/logo.png" onError={() => setFailed(true)} alt="" style={{ width: 18, height: 18, objectFit: 'contain', display: 'block' }} />
+}
+
 export default function GalleryApp() {
   const { dark, toggle } = useTheme()
   const [index, setIndex] = useState<GalleryIndex | null>(null)
@@ -97,6 +106,9 @@ export default function GalleryApp() {
         <button
           onClick={goToLanding}
           style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
             background: 'none',
             border: 'none',
             cursor: 'pointer',
@@ -108,6 +120,7 @@ export default function GalleryApp() {
           }}
         >
           pollen
+          <HeaderLogo />
         </button>
         <button
           onClick={toggle}
