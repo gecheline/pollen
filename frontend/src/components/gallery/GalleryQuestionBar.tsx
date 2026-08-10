@@ -15,12 +15,14 @@
 // `questionActive: false` dims it to read as leftover text, not a live
 // prompt.
 //
-// Persisted, not per-turn: "Skip animations" flips the same global
-// preference every useReveal ticker already watches (see
-// useSkipAnimations), so it also completes whatever's revealing right now
-// and starts every future reveal already complete — not just this turn's.
-// It only shows while there's something left to skip; once done, Replay
-// (and Follow up, if there's a next turn) take its place.
+// Scoped to this one card view, not per-turn and not persisted: "Skip
+// animations" flips the same preference every useReveal ticker under this
+// card already watches (see useSkipAnimations), so it also completes
+// whatever's revealing right now and starts every later turn *in this
+// conversation* already complete — without carrying over to a different
+// card, or surviving a reload. It only shows while there's something left
+// to skip; once done, Replay (and Follow up, if there's a next turn) take
+// its place.
 import type { CSSProperties } from 'react'
 import { useSkipAnimations } from '../../lib/useSkipAnimations'
 

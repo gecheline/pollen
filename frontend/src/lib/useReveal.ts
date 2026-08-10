@@ -27,10 +27,10 @@ import { useSkipAnimations } from './useSkipAnimations'
 const MS_PER_TOKEN = 200
 
 export function useReveal(maxTokens: number, resetKey: string | number | null) {
-  // Global, persisted "skip animations" preference (see useSkipAnimations) —
-  // in the deps array below (unlike maxTokens) so flipping it on mid-reveal
-  // completes whatever's currently ticking immediately, not just future
-  // reveals.
+  // "Skip animations" for the card currently open (see useSkipAnimations —
+  // scoped to one CardView, not persisted) — in the deps array below
+  // (unlike maxTokens) so flipping it on mid-reveal completes whatever's
+  // currently ticking immediately, not just this turn's future reveals.
   const { skip: skipAll } = useSkipAnimations()
   const [revealCount, setRevealCount] = useState(resetKey === null || skipAll ? maxTokens : 0)
   const rafRef = useRef<number | null>(null)

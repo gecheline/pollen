@@ -10,6 +10,7 @@ import type { GalleryIndex, GalleryCard } from '../../lib/gallery'
 import { assertGalleryModelMatches } from '../../lib/gallery'
 import { loadVocabMap, type VocabManifest } from '../../lib/loadVocabMap'
 import { MAP_LIMITS } from '../../lib/mapLimits'
+import { SkipAnimationsProvider } from '../../lib/useSkipAnimations'
 import type { VocabPoint } from '../../types'
 import ToggleCard from './ToggleCard'
 import TurnsCard from './TurnsCard'
@@ -66,84 +67,90 @@ export default function CardView({
   }, [card.id, index.model_name])
 
   return (
-    <div style={{ maxWidth: 1400, margin: '0 auto', padding: '20px 20px 40px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, gap: 12 }}>
-        <button
-          onClick={onBack}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: 0,
-            fontSize: 9,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            color: 'var(--ink-muted)',
-          }}
-        >
-          ← All conversations
-        </button>
-        <button
-          onClick={() => setShowObservations(true)}
-          style={{
-            background: 'none',
-            border: '1px solid var(--hairline)',
-            cursor: 'pointer',
-            padding: '6px 12px',
-            fontSize: 9,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            color: 'var(--ink-muted)',
-          }}
-        >
-          Observations
-        </button>
+    // One provider per card view (see useSkipAnimations.tsx) — CardView
+    // remounts fresh every time a card is opened (always via Landing in
+    // between, never card-to-card directly), so this naturally resets to
+    // "animations on" every time rather than needing to be reset by hand.
+    <SkipAnimationsProvider>
+      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '20px 20px 40px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, gap: 12 }}>
+          <button
+            onClick={onBack}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+              fontSize: 9,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              color: 'var(--ink-muted)',
+            }}
+          >
+            ← All conversations
+          </button>
+          <button
+            onClick={() => setShowObservations(true)}
+            style={{
+              background: 'none',
+              border: '1px solid var(--hairline)',
+              cursor: 'pointer',
+              padding: '6px 12px',
+              fontSize: 9,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              color: 'var(--ink-muted)',
+            }}
+          >
+            Observations
+          </button>
+        </div>
+
+        <h1 style={{ margin: '0 0 6px', fontFamily: "'Lora', Georgia, serif", fontStyle: 'italic', fontWeight: 400, fontSize: 22, color: 'var(--ink)' }}>
+          {card.title}
+        </h1>
+        <p style={{ margin: '0 0 18px', fontSize: 12, lineHeight: 1.6, color: 'var(--ink-muted)', maxWidth: 640 }}>{card.subtitle}</p>
+
+        {card.explainer && (
+          <p
+            style={{
+              margin: '0 0 20px',
+              padding: '10px 14px',
+              border: '1px solid var(--hairline)',
+              fontSize: 11,
+              lineHeight: 1.6,
+              color: 'var(--ink-muted)',
+              maxWidth: 720,
+            }}
+          >
+            {card.explainer}
+          </p>
+        )}
+
+        {error && <p style={{ fontSize: 11, color: 'var(--ink-muted)' }}>{error}</p>}
+
+        {!vocabPoints ? (
+          <p style={{ fontSize: 11, color: 'var(--ink-faint)' }}>Loading…</p>
+        ) : (
+          (() => {
+            const layoutProps: LayoutProps = { card, vocabPoints, mapLimits: MAP_LIMITS[GALLERY_MODEL_DIR], isDark }
+            switch (card.layout) {
+              case 'toggle':
+                return <ToggleCard {...layoutProps} />
+              case 'turns':
+                return <TurnsCard {...layoutProps} />
+              case 'mixed_featured':
+                return <MixedFeaturedCard {...layoutProps} />
+              case 'mixed_inline':
+                return <MixedInlineCard {...layoutProps} />
+              default:
+                return <p style={{ fontSize: 11, color: 'var(--ink-muted)' }}>Unknown layout "{card.layout}".</p>
+            }
+          })()
+        )}
+
+        <ObservationsPanel open={showObservations} onClose={() => setShowObservations(false)} />
       </div>
-
-      <h1 style={{ margin: '0 0 6px', fontFamily: "'Lora', Georgia, serif", fontStyle: 'italic', fontWeight: 400, fontSize: 22, color: 'var(--ink)' }}>
-        {card.title}
-      </h1>
-      <p style={{ margin: '0 0 18px', fontSize: 12, lineHeight: 1.6, color: 'var(--ink-muted)', maxWidth: 640 }}>{card.subtitle}</p>
-
-      {card.explainer && (
-        <p
-          style={{
-            margin: '0 0 20px',
-            padding: '10px 14px',
-            border: '1px solid var(--hairline)',
-            fontSize: 11,
-            lineHeight: 1.6,
-            color: 'var(--ink-muted)',
-            maxWidth: 720,
-          }}
-        >
-          {card.explainer}
-        </p>
-      )}
-
-      {error && <p style={{ fontSize: 11, color: 'var(--ink-muted)' }}>{error}</p>}
-
-      {!vocabPoints ? (
-        <p style={{ fontSize: 11, color: 'var(--ink-faint)' }}>Loading…</p>
-      ) : (
-        (() => {
-          const layoutProps: LayoutProps = { card, vocabPoints, mapLimits: MAP_LIMITS[GALLERY_MODEL_DIR], isDark }
-          switch (card.layout) {
-            case 'toggle':
-              return <ToggleCard {...layoutProps} />
-            case 'turns':
-              return <TurnsCard {...layoutProps} />
-            case 'mixed_featured':
-              return <MixedFeaturedCard {...layoutProps} />
-            case 'mixed_inline':
-              return <MixedInlineCard {...layoutProps} />
-            default:
-              return <p style={{ fontSize: 11, color: 'var(--ink-muted)' }}>Unknown layout "{card.layout}".</p>
-          }
-        })()
-      )}
-
-      <ObservationsPanel open={showObservations} onClose={() => setShowObservations(false)} />
-    </div>
+    </SkipAnimationsProvider>
   )
 }
