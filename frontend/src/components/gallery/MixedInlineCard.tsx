@@ -1,7 +1,7 @@
 // "mixed_inline" layout (art): one row, in card.panel_order — baseline,
 // mixed, then the lenses, same arrangement as the local app's own panel
-// row. Five turns via repeated "follow up"; TurnControls' own hasNext
-// (current.turnIndex < card.turns.length - 1) already hides the button on
+// row. Five turns via repeated "follow up"; the breaker's own hasNext
+// (current.turnIndex < card.turns.length - 1) already hides Follow up on
 // the last turn, nothing extra needed here for that. card.explainer is
 // rendered by CardView, above the row.
 
@@ -10,7 +10,7 @@ import { SCATTER_INFO_TEXT } from './CardView'
 import { useGalleryTurns, panelText } from '../../lib/useGalleryTurns'
 import { buildPanelDefs, buildLensAccents } from './panelDefs'
 import PanelGrid, { type GridPanel } from './PanelGrid'
-import TurnControls from './TurnControls'
+import GalleryQuestionBar from './GalleryQuestionBar'
 
 export default function MixedInlineCard({ card, vocabPoints, mapLimits, isDark }: LayoutProps) {
   const { completed, current, reveal, hasNext, followUp, replay, loadingNext } = useGalleryTurns(card)
@@ -30,9 +30,16 @@ export default function MixedInlineCard({ card, vocabPoints, mapLimits, isDark }
   }))
 
   return (
-    <div>
-      <PanelGrid panels={panels} vocabPoints={vocabPoints} mapLimits={mapLimits} isDark={isDark} lensAccents={lensAccents} mapInfo={SCATTER_INFO_TEXT} />
-      <TurnControls done={reveal.done} replay={replay} hasNext={hasNext} onFollowUp={followUp} loadingNext={loadingNext} />
-    </div>
+    <PanelGrid
+      panels={panels}
+      vocabPoints={vocabPoints}
+      mapLimits={mapLimits}
+      isDark={isDark}
+      lensAccents={lensAccents}
+      mapInfo={SCATTER_INFO_TEXT}
+      breaker={
+        <GalleryQuestionBar question={current.question} done={reveal.done} replay={replay} hasNext={hasNext} onFollowUp={followUp} loadingNext={loadingNext} />
+      }
+    />
   )
 }

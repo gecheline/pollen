@@ -16,6 +16,14 @@
   --accent-coral:   #c07060;
   --accent-rose:    #b07080;
   --accent-teal:    #4a7a7a;
+
+  /* The opposite mode's surface/ink, always — not "the current mode's
+     inverse computed in JS", just the other block's values mirrored here so
+     a component can ask for contrast-on-purpose (the gallery's "get
+     pollen" banner, meant to pop against whichever theme is active) without
+     threading isDark down as a prop. Swapped in .dark below. */
+  --surface-invert: #161514;
+  --ink-invert: #e2ddd5;
 }
 
 .dark {
@@ -26,6 +34,9 @@
   --ink-muted: #7a7872;
   --ink-faint: #38352f;
   --hairline: #2b2926;
+
+  --surface-invert: #edeae0;
+  --ink-invert: #1c1a17;
 }
 
 *, *::before, *::after { box-sizing: border-box; }

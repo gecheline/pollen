@@ -1,7 +1,8 @@
-// Desktop: one row of PanelTops followed by one row of PanelBottoms — the
-// same two-row split App.tsx uses for the local app, minus the QuestionBar
-// breaker between them (the gallery has no question input to break the
-// panels up with).
+// Desktop: one row of PanelTops, an optional breaker (GalleryQuestionBar —
+// passed in by the card layout, not owned here, since a turn can span more
+// than one PanelGrid — see MixedFeaturedCard), then one row of
+// PanelBottoms — the same two/three-row split App.tsx uses for the local
+// app (PanelTop row, QuestionBar, PanelBottom row).
 //
 // Narrow viewports (phone widths): each panel becomes its own full-width
 // block — PanelTop immediately followed by its own PanelBottom — stacked
@@ -14,7 +15,7 @@
 // since no other gallery component needs to coordinate hover across
 // panels).
 
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import type * as d3 from 'd3'
 import type { PanelDef, PanelData, VocabPoint, VocabActivation, GenState, LensId } from '../../types'
 import type { AxisLimits } from '../../lib/mapLimits'
@@ -46,11 +47,16 @@ interface PanelGridProps {
   isDark: boolean
   lensAccents: Record<LensId, string>
   mapInfo?: string
+  // Rendered between the top (text) row and the bottom (trace) row on
+  // desktop; on the stacked mobile layout, where there's no single trace
+  // row to sit "between", it renders once after every panel's own
+  // top+bottom pair instead.
+  breaker?: ReactNode
 }
 
 const MOBILE_QUERY = '(max-width: 700px)'
 
-export default function PanelGrid({ panels, vocabPoints, mapLimits, isDark, lensAccents, mapInfo }: PanelGridProps) {
+export default function PanelGrid({ panels, vocabPoints, mapLimits, isDark, lensAccents, mapInfo, breaker }: PanelGridProps) {
   const [hoverByPanel, setHoverByPanel] = useState<Record<string, Hover | null>>({})
   const isMobile = useMediaQuery(MOBILE_QUERY)
   // Stacked mobile panels are each full device width — the cramped-width
@@ -129,11 +135,12 @@ export default function PanelGrid({ panels, vocabPoints, mapLimits, isDark, lens
     return (
       <div style={{ border: '1px solid var(--hairline)', marginBottom: 24 }}>
         {panels.map((p, i) => (
-          <div key={p.def.id} style={{ borderBottom: i < panels.length - 1 ? '1px solid var(--hairline)' : 'none' }}>
+          <div key={p.def.id} style={{ borderBottom: i < panels.length - 1 || breaker ? '1px solid var(--hairline)' : 'none' }}>
             {top(p)}
             {bottom(p)}
           </div>
         ))}
+        {breaker}
       </div>
     )
   }
@@ -141,7 +148,8 @@ export default function PanelGrid({ panels, vocabPoints, mapLimits, isDark, lens
   return (
     <div style={{ border: '1px solid var(--hairline)', borderBottom: 'none', marginBottom: 24 }}>
       <div style={{ display: 'flex' }}>{panels.map(top)}</div>
-      <div style={{ display: 'flex', borderTop: '1px solid var(--hairline)' }}>{panels.map(bottom)}</div>
+      {breaker}
+      <div style={{ display: 'flex', borderTop: breaker ? 'none' : '1px solid var(--hairline)' }}>{panels.map(bottom)}</div>
     </div>
   )
 }

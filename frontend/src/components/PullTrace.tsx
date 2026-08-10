@@ -12,7 +12,7 @@
 // non-uniform stretching would visually distort the peak-word <text>
 // elements this version adds. 1 SVG unit = 1 css px, so text renders true.
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
 import * as d3 from 'd3'
 import type { LensToken, LensId } from '../types'
 import { TRACE_HEIGHT, LABEL_MARGIN } from '../lib/scales'
@@ -124,7 +124,19 @@ export default function PullTrace({
   }
 
   const hoverGuideVisible = hoveredTokenIndex !== null && hoveredTokenIndex < visibleCount
-  const slot = xScale(1) - xScale(0)
+
+  // One hit target for the whole ribbon, not one rect per revealed token —
+  // that used to mean re-creating up to `visibleCount` SVG elements on
+  // every single reveal tick (the same shape of bug VocabMap's dormant
+  // cloud had), and the cost grew right along with the answer as it
+  // typed out. `xScale` is linear, so inverting the pointer's x and
+  // rounding lands on the same nearest-token-index this per-rect version
+  // computed via half-slot boundaries — same hover granularity, but the
+  // element count no longer depends on how much of the answer is visible.
+  const handleHitMove = (e: MouseEvent<SVGRectElement>) => {
+    const i = Math.round(xScale.invert(e.nativeEvent.offsetX))
+    onHoverToken(Math.max(0, Math.min(visibleCount - 1, i)))
+  }
 
   const anchorFor = (x: number): 'start' | 'middle' | 'end' => {
     if (x < LEFT_MARGIN + 24) return 'start'
@@ -197,20 +209,17 @@ export default function PullTrace({
           )
         })}
 
-        {/* invisible full-height hit targets — the ribbon itself is often too
+        {/* invisible full-height hit target — the ribbon itself is often too
             thin/off-center to hover precisely */}
-        {points.map(p => (
-          <rect
-            key={p.i}
-            x={xScale(p.i) - slot / 2}
-            y={0}
-            width={slot}
-            height={TRACE_HEIGHT}
-            fill="transparent"
-            onMouseEnter={() => onHoverToken(p.i)}
-            onMouseLeave={() => onHoverToken(null)}
-          />
-        ))}
+        <rect
+          x={0}
+          y={0}
+          width={width}
+          height={TRACE_HEIGHT}
+          fill="transparent"
+          onMouseMove={handleHitMove}
+          onMouseLeave={() => onHoverToken(null)}
+        />
       </svg>
 
       {hoveredToken && (

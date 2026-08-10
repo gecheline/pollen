@@ -14,6 +14,7 @@ import { loadPanelFile } from '../../lib/gallery'
 import { useReveal } from '../../lib/useReveal'
 import { buildPanelDefs, buildLensAccents } from './panelDefs'
 import PanelGrid, { type GridPanel } from './PanelGrid'
+import GalleryQuestionBar from './GalleryQuestionBar'
 import { SCATTER_INFO_TEXT } from './CardView'
 import type { PanelData, VocabActivation } from '../../types'
 
@@ -68,9 +69,11 @@ export default function ToggleCard({ card, vocabPoints, mapLimits, isDark }: Lay
   if (!loaded) return <p style={{ fontSize: 11, color: 'var(--ink-faint)' }}>Loading…</p>
 
   const panels: GridPanel[] = [{ def: defs.baseline, ...loaded.baseline, revealCount: baselineReveal.revealCount }]
+  let allDone = baselineReveal.done
   card.lenses.forEach((lens, i) => {
     if (!visible.has(lens.panel_id)) return
     panels.push({ def: defs.lenses[lens.panel_id], ...loaded[lens.panel_id], revealCount: lensReveals[i].revealCount })
+    allDone = allDone && lensReveals[i].done
   })
 
   return (
@@ -118,7 +121,15 @@ export default function ToggleCard({ card, vocabPoints, mapLimits, isDark }: Lay
         })}
       </div>
 
-      <PanelGrid panels={panels} vocabPoints={vocabPoints} mapLimits={mapLimits} isDark={isDark} lensAccents={lensAccents} mapInfo={SCATTER_INFO_TEXT} />
+      <PanelGrid
+        panels={panels}
+        vocabPoints={vocabPoints}
+        mapLimits={mapLimits}
+        isDark={isDark}
+        lensAccents={lensAccents}
+        mapInfo={SCATTER_INFO_TEXT}
+        breaker={<GalleryQuestionBar question={turn.user_message} done={allDone} />}
+      />
     </div>
   )
 }

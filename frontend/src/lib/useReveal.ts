@@ -15,16 +15,11 @@
 // caller passes each panel's own id as its resetKey the first time it's
 // toggled on, and keeps passing that same id forever after — toggling off
 // and back on doesn't change resetKey, so it doesn't restart anything.
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSkipAnimations } from './useSkipAnimations'
 
-// Spec: aim ~8-15ms/token. Was 12ms, but VocabMap used to redraw its whole
-// ~130k-point dormant cloud on every single tick regardless of how little
-// had actually changed — with several panels animating at once (universe,
-// art) that dropped ticks under the render load and made 12ms/token feel
-// much slower than the number suggests. VocabMap now caches that layer and
-// only repaints the small activated-points layer per tick, so the bottom
-// of the spec's own range is sustainable rather than aspirational.
+// Spec: aim ~8-15ms/token, expressed here as a rate rather than a fixed
+// per-tick delay — see the requestAnimationFrame loop below for why.
 const MS_PER_TOKEN = 8
 
 export function useReveal(maxTokens: number, resetKey: string | number | null) {
@@ -34,8 +29,11 @@ export function useReveal(maxTokens: number, resetKey: string | number | null) {
   // reveals.
   const { skip: skipAll } = useSkipAnimations()
   const [revealCount, setRevealCount] = useState(resetKey === null || skipAll ? maxTokens : 0)
+  const rafRef = useRef<number | null>(null)
 
   useEffect(() => {
+    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
+
     if (resetKey === null || skipAll) {
       setRevealCount(maxTokens)
       return
@@ -46,14 +44,35 @@ export function useReveal(maxTokens: number, resetKey: string | number | null) {
     }
 
     setRevealCount(0)
-    const id = setInterval(() => {
-      setRevealCount(c => {
-        const next = Math.min(c + 1, maxTokens)
-        if (next >= maxTokens) clearInterval(id)
-        return next
-      })
-    }, MS_PER_TOKEN)
-    return () => clearInterval(id)
+    const start = performance.now()
+    // requestAnimationFrame, not setInterval: this ticks against real
+    // elapsed wall-clock time (Math.floor(elapsed / MS_PER_TOKEN)) instead
+    // of counting fixed +1 steps. That distinction matters under load —
+    // with several panels revealing at once, each tick's render (text
+    // reflow, trace redraw, map redraw) can take longer than 8ms, and a
+    // setInterval firing every 8ms regardless doesn't wait for that: the
+    // callbacks queue up back-to-back, and the browser burns through them
+    // in a tight, janky burst once the main thread frees up — visible
+    // stutter, worse the more panels share the tick. rAF instead fires at
+    // most once per actual paintable frame (~16ms at 60Hz) and computes
+    // how many tokens *should* be visible by now from real elapsed time,
+    // so a slow frame just means one bigger jump next frame — correct
+    // total duration, no backlog, and no more paint work requested than
+    // the display can actually show.
+    const tick = (now: number) => {
+      const next = Math.min(maxTokens, Math.floor((now - start) / MS_PER_TOKEN))
+      setRevealCount(next)
+      if (next < maxTokens) {
+        rafRef.current = requestAnimationFrame(tick)
+      } else {
+        rafRef.current = null
+      }
+    }
+    rafRef.current = requestAnimationFrame(tick)
+
+    return () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetKey, skipAll])
 

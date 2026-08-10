@@ -2,14 +2,17 @@
 // individual pollinators in their own row below — a distinct treatment so
 // the mixed answer reads as the point of the card, not just one more
 // panel in a line. card.explainer is rendered by CardView, above both
-// rows.
-
+// rows. One turn, one breaker — it belongs to both rows equally, but there's
+// nowhere to put a single bar "between" two separate PanelGrids without it
+// reading as attached to just one of them, so it sits after the second
+// (lenses) row, closest to where the local app's own QuestionBar sits
+// relative to a single row: right before the last trace strip.
 import type { LayoutProps } from './CardView'
 import { SCATTER_INFO_TEXT } from './CardView'
 import { useGalleryTurns, panelText } from '../../lib/useGalleryTurns'
 import { buildPanelDefs, buildLensAccents } from './panelDefs'
 import PanelGrid, { type GridPanel } from './PanelGrid'
-import TurnControls from './TurnControls'
+import GalleryQuestionBar from './GalleryQuestionBar'
 
 export default function MixedFeaturedCard({ card, vocabPoints, mapLimits, isDark }: LayoutProps) {
   const { completed, current, reveal, hasNext, followUp, replay, loadingNext } = useGalleryTurns(card)
@@ -31,10 +34,19 @@ export default function MixedFeaturedCard({ card, vocabPoints, mapLimits, isDark
   const bottomRow = card.lenses.map(l => l.panel_id).map(buildPanel)
 
   return (
-    <div>
+    <>
       <PanelGrid panels={topRow} vocabPoints={vocabPoints} mapLimits={mapLimits} isDark={isDark} lensAccents={lensAccents} mapInfo={SCATTER_INFO_TEXT} />
-      <PanelGrid panels={bottomRow} vocabPoints={vocabPoints} mapLimits={mapLimits} isDark={isDark} lensAccents={lensAccents} mapInfo={SCATTER_INFO_TEXT} />
-      <TurnControls done={reveal.done} replay={replay} hasNext={hasNext} onFollowUp={followUp} loadingNext={loadingNext} />
-    </div>
+      <PanelGrid
+        panels={bottomRow}
+        vocabPoints={vocabPoints}
+        mapLimits={mapLimits}
+        isDark={isDark}
+        lensAccents={lensAccents}
+        mapInfo={SCATTER_INFO_TEXT}
+        breaker={
+          <GalleryQuestionBar question={current.question} done={reveal.done} replay={replay} hasNext={hasNext} onFollowUp={followUp} loadingNext={loadingNext} />
+        }
+      />
+    </>
   )
 }

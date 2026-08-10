@@ -142,29 +142,36 @@ export default function Landing({ index, onOpenCard }: { index: GalleryIndex; on
         ))}
       </div>
 
+      {/* Inverted, not themed with everything else — the one place on the
+          page meant to pop rather than blend in, so it reads as "the
+          destination" this whole page has been pointing at. Uses the
+          --*-invert tokens (index.css) rather than an isDark prop, so it
+          stays correct in both themes without threading state down. */}
       <div
         style={{
-          padding: '28px 4px 40px',
+          margin: '28px 0 40px',
+          padding: isMobile ? '22px 20px' : '26px 32px',
           display: 'flex',
           flexDirection: isMobile ? 'column' : 'row',
-          alignItems: isMobile ? 'flex-start' : 'baseline',
+          alignItems: isMobile ? 'flex-start' : 'center',
           justifyContent: 'space-between',
           gap: 20,
+          background: 'var(--surface-invert)',
         }}
       >
-        <p style={{ margin: 0, fontSize: 12, lineHeight: 1.6, color: 'var(--ink-muted)', maxWidth: 620 }}>{index.footer.text}</p>
+        <p style={{ margin: 0, fontSize: 12, lineHeight: 1.6, color: 'var(--ink-invert)', maxWidth: 620, opacity: 0.85 }}>{index.footer.text}</p>
         <a
           href={index.github_url}
           target="_blank"
           rel="noreferrer"
           style={{
             flexShrink: 0,
-            border: '1px solid var(--hairline)',
-            padding: '7px 14px',
+            border: '1px solid var(--ink-invert)',
+            padding: '8px 16px',
             fontSize: 10,
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
-            color: 'var(--ink)',
+            color: 'var(--ink-invert)',
             textDecoration: 'none',
             whiteSpace: 'nowrap',
           }}
