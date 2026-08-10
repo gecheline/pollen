@@ -19,7 +19,7 @@
 // activated points read through saturation + density; dark mode's activated
 // points glow, because luminance against a near-black surface actually reads.
 
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useLayoutEffect, useRef } from 'react'
 import * as d3 from 'd3'
 import type { VocabPoint, VocabActivation, GenState } from '../types'
 import type { AxisLimits } from '../lib/mapLimits'
@@ -101,11 +101,16 @@ export default function VocabMap({ vocabPoints, activations, revealCount, accent
   const activeCanvasRef = useRef<HTMLCanvasElement>(null)
   const quadtreeRef = useRef<d3.Quadtree<VocabPoint> | null>(null)
   const transformRef = useRef<Transform | null>(null)
+  // Always-current ref to the latest drawActiveLayer, so the static-layer
+  // effect below can call it without *depending on its identity* — see the
+  // comment on that effect's dependency array for why that distinction is
+  // load-bearing, not stylistic.
+  const drawActiveLayerRef = useRef<() => void>(() => {})
 
   // Quadtree rebuilt only when the point cloud itself changes (once per
   // generation) — cheap, and it's the mandated tool for pointer lookup even
   // though this pass doesn't yet define what hovering a point should show.
-  useEffect(() => {
+  useLayoutEffect(() => {
     quadtreeRef.current = d3
       .quadtree<VocabPoint>()
       .x(d => d.x)
@@ -149,13 +154,33 @@ export default function VocabMap({ vocabPoints, activations, revealCount, accent
     ctx.shadowBlur = 0
     ctx.globalAlpha = 1
   }, [vocabPoints, activations, revealCount, accent, genState, isDark])
+  drawActiveLayerRef.current = drawActiveLayer
 
   // Dormant cloud — fine ink-dust on paper in light mode, dim dust against
   // warm black in dark mode. Never glows. Redrawn only when the cloud
   // itself, the clip box, dark mode, or the container size actually
   // change — this is the layer that used to redraw every ~12ms tick for
   // no reason.
-  useEffect(() => {
+  //
+  // Deliberately NOT depending on drawActiveLayer here, even though draw()
+  // calls it at the end (to keep the active layer in sync after a resize):
+  // drawActiveLayer is a useCallback whose own deps include revealCount,
+  // so its *identity* changes on every single reveal tick. Depending on it
+  // here would re-trigger this entire ~130k-point redraw on every tick too
+  // — silently reintroducing the exact "redraw the whole dormant cloud
+  // every tick" bug the two-canvas split exists to fix, just through a
+  // subtler path than the original one-canvas version had. Calling
+  // drawActiveLayerRef.current() instead gets the same "stay in sync after
+  // a resize" behavior without making tick-to-tick changes a trigger.
+  //
+  // useLayoutEffect, not useEffect: this draws to a canvas, a retained-mode
+  // surface that doesn't clear itself just because React committed new
+  // props — it only updates when this code actually runs. useEffect runs
+  // after the browser paints, which leaves a real window where the
+  // *previous* canvas bitmap is still on screen even though the rest of
+  // the panel (text, driven by React state directly) has already updated.
+  // useLayoutEffect runs before paint, closing that window.
+  useLayoutEffect(() => {
     const container = containerRef.current
     const staticCanvas = staticCanvasRef.current
     const activeCanvas = activeCanvasRef.current
@@ -192,17 +217,23 @@ export default function VocabMap({ vocabPoints, activations, revealCount, accent
 
       // Size (and therefore the transform) may have just changed — keep
       // the activated layer in sync rather than leaving it stale until its
-      // own next tick.
-      drawActiveLayer()
+      // own next tick. Via the ref (see above), not a direct call to
+      // drawActiveLayer — that would need it in this effect's own deps,
+      // which is exactly what we're avoiding.
+      drawActiveLayerRef.current()
     }
 
     draw()
     const observer = new ResizeObserver(draw)
     observer.observe(container)
     return () => observer.disconnect()
-  }, [vocabPoints, mapLimits, isDark, drawActiveLayer])
+  }, [vocabPoints, mapLimits, isDark])
 
-  useEffect(() => {
+  // Also useLayoutEffect, and for the same reason — this is the effect
+  // that fires every single reveal tick (drawActiveLayer's own deps
+  // include revealCount), so it's the one that most needs to land before
+  // paint rather than after it.
+  useLayoutEffect(() => {
     drawActiveLayer()
   }, [drawActiveLayer])
 
