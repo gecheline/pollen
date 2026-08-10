@@ -15,6 +15,7 @@ import ToggleCard from './ToggleCard'
 import TurnsCard from './TurnsCard'
 import MixedFeaturedCard from './MixedFeaturedCard'
 import MixedInlineCard from './MixedInlineCard'
+import ObservationsPanel from './ObservationsPanel'
 
 // The one model the gallery ships (spec §1) — same asset-dir naming
 // convention as the local app's ModelEntry.dir / MAP_LIMITS keys.
@@ -44,6 +45,7 @@ export default function CardView({
 }) {
   const [vocabPoints, setVocabPoints] = useState<VocabPoint[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [showObservations, setShowObservations] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -65,22 +67,38 @@ export default function CardView({
 
   return (
     <div style={{ maxWidth: 1400, margin: '0 auto', padding: '20px 20px 40px' }}>
-      <button
-        onClick={onBack}
-        style={{
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          padding: 0,
-          marginBottom: 14,
-          fontSize: 9,
-          letterSpacing: '0.1em',
-          textTransform: 'uppercase',
-          color: 'var(--ink-muted)',
-        }}
-      >
-        ← All conversations
-      </button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, gap: 12 }}>
+        <button
+          onClick={onBack}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: 0,
+            fontSize: 9,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: 'var(--ink-muted)',
+          }}
+        >
+          ← All conversations
+        </button>
+        <button
+          onClick={() => setShowObservations(true)}
+          style={{
+            background: 'none',
+            border: '1px solid var(--hairline)',
+            cursor: 'pointer',
+            padding: '6px 12px',
+            fontSize: 9,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: 'var(--ink-muted)',
+          }}
+        >
+          Observations
+        </button>
+      </div>
 
       <h1 style={{ margin: '0 0 6px', fontFamily: "'Lora', Georgia, serif", fontStyle: 'italic', fontWeight: 400, fontSize: 22, color: 'var(--ink)' }}>
         {card.title}
@@ -124,6 +142,8 @@ export default function CardView({
           }
         })()
       )}
+
+      <ObservationsPanel open={showObservations} onClose={() => setShowObservations(false)} />
     </div>
   )
 }

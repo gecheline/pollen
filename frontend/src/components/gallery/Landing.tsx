@@ -1,13 +1,55 @@
-// Two sections side by side, two cards each, a footer pointing at the
-// local app — all copy read from index.json (§8: nothing in §3-§6 is
-// hardcoded in components), including which two sections exist and what
-// they're called.
+// Hero (title + logo placeholder), a fixed editorial intro (see Intro.tsx),
+// then two sections side by side (two cards each) and a footer pointing at
+// the local app. The card-grid content itself still reads entirely from
+// index.json (§8: nothing in §3-§6 is hardcoded in components), including
+// which two sections exist and what they're called — the hero/intro above
+// it are fixed page copy, not per-deploy data, so they're not.
 
 import { useState } from 'react'
 import type { GalleryIndex, GalleryCard } from '../../lib/gallery'
 import { useMediaQuery } from '../../lib/useMediaQuery'
+import IntroSection from './Intro'
 
 const MOBILE_QUERY = '(max-width: 700px)'
+
+// Logo isn't made yet — a plain lettermark-shaped placeholder holds the spot
+// without pretending to be a real mark.
+function Hero() {
+  return (
+    <div style={{ textAlign: 'center', padding: '40px 4px 44px' }}>
+      <div
+        style={{
+          width: 52,
+          height: 52,
+          margin: '0 auto 14px',
+          borderRadius: '50%',
+          border: '1px solid var(--hairline)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 8,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: 'var(--ink-faint)',
+        }}
+      >
+        logo
+      </div>
+      <h1
+        style={{
+          margin: 0,
+          fontFamily: "'Lora', Georgia, serif",
+          fontStyle: 'italic',
+          fontWeight: 400,
+          fontSize: 40,
+          color: 'var(--ink)',
+        }}
+      >
+        pollen
+      </h1>
+    </div>
+  )
+}
 
 function CardTile({ card, onClick }: { card: GalleryCard; onClick: () => void }) {
   const [imgFailed, setImgFailed] = useState(false)
@@ -53,7 +95,10 @@ export default function Landing({ index, onOpenCard }: { index: GalleryIndex; on
   const isMobile = useMediaQuery(MOBILE_QUERY)
 
   return (
-    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px 0' }}>
+    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px' }}>
+      <Hero />
+      <IntroSection />
+
       <div
         style={{
           display: 'grid',
