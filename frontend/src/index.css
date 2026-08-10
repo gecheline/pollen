@@ -17,13 +17,19 @@
   --accent-rose:    #b07080;
   --accent-teal:    #4a7a7a;
 
-  /* The opposite mode's surface/ink, always — not "the current mode's
-     inverse computed in JS", just the other block's values mirrored here so
-     a component can ask for contrast-on-purpose (the gallery's "get
-     pollen" banner, meant to pop against whichever theme is active) without
-     threading isDark down as a prop. Swapped in .dark below. */
-  --surface-invert: #161514;
-  --ink-invert: #e2ddd5;
+  /* A muted, fixed pairing for the gallery's "get pollen" banner — the
+     one spot meant to read as a distinct destination without matching
+     whichever theme is active. First version swapped in the *other*
+     mode's full surface/ink (bright beige on black, or the reverse) —
+     technically "contrast on purpose," but in practice just jarring,
+     especially the bright-beige-on-dark-page direction. This is the
+     same idea toned down: the darker beige from the light palette
+     (--surface-inset, not the brighter --surface/--surface-raised) paired
+     with the lighter grey from the dark palette (--ink-muted, not the
+     near-white --ink) — deliberately fixed, not redeclared in .dark below,
+     so it reads the same muted way regardless of which theme is active. */
+  --banner-surface: #e2dfd5;
+  --banner-ink: #7a7872;
 }
 
 .dark {
@@ -34,9 +40,6 @@
   --ink-muted: #7a7872;
   --ink-faint: #38352f;
   --hairline: #2b2926;
-
-  --surface-invert: #edeae0;
-  --ink-invert: #1c1a17;
 }
 
 *, *::before, *::after { box-sizing: border-box; }

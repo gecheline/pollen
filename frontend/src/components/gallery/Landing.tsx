@@ -142,11 +142,13 @@ export default function Landing({ index, onOpenCard }: { index: GalleryIndex; on
         ))}
       </div>
 
-      {/* Inverted, not themed with everything else — the one place on the
-          page meant to pop rather than blend in, so it reads as "the
-          destination" this whole page has been pointing at. Uses the
-          --*-invert tokens (index.css) rather than an isDark prop, so it
-          stays correct in both themes without threading state down. */}
+      {/* Fixed, not themed with everything else — the one place on the page
+          meant to read as a distinct destination rather than blend in. Uses
+          the --banner-* tokens (index.css), a deliberately muted pairing —
+          not a full swap to the opposite theme's own surface/ink, which
+          read as jarring, especially bright-beige-on-a-dark-page. Fixed
+          means it stays this same muted look in both themes without
+          threading isDark down as a prop. */}
       <div
         style={{
           margin: '28px 0 40px',
@@ -156,22 +158,22 @@ export default function Landing({ index, onOpenCard }: { index: GalleryIndex; on
           alignItems: isMobile ? 'flex-start' : 'center',
           justifyContent: 'space-between',
           gap: 20,
-          background: 'var(--surface-invert)',
+          background: 'var(--banner-surface)',
         }}
       >
-        <p style={{ margin: 0, fontSize: 12, lineHeight: 1.6, color: 'var(--ink-invert)', maxWidth: 620, opacity: 0.85 }}>{index.footer.text}</p>
+        <p style={{ margin: 0, fontSize: 12, lineHeight: 1.6, color: 'var(--banner-ink)', maxWidth: 620 }}>{index.footer.text}</p>
         <a
           href={index.github_url}
           target="_blank"
           rel="noreferrer"
           style={{
             flexShrink: 0,
-            border: '1px solid var(--ink-invert)',
+            border: '1px solid var(--banner-ink)',
             padding: '8px 16px',
             fontSize: 10,
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
-            color: 'var(--ink-invert)',
+            color: 'var(--banner-ink)',
             textDecoration: 'none',
             whiteSpace: 'nowrap',
           }}

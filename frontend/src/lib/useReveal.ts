@@ -18,13 +18,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { useSkipAnimations } from './useSkipAnimations'
 
-// Was 8ms — sustainable now that VocabMap/PullTrace don't redo O(n) work
-// per tick, but "sustainable" turned out to mean "instant": a ~150-token
-// answer finished revealing in about a second, which read as no animation
-// at all rather than a fast one. This is a deliberately-visible typing
-// pace, not a technical ceiling — Skip (GalleryQuestionBar) is right there
-// for anyone who doesn't want to watch it.
-const MS_PER_TOKEN = 22
+// Was 8ms (sustainable once VocabMap/PullTrace stopped redoing O(n) work
+// per tick), then 22ms — still too close to "instant" to read as an
+// animation at all, especially on shorter answers where even 22ms/token
+// is over in a second or two. This is a deliberately slow, unmissable
+// typing pace, not a technical ceiling — Skip (GalleryQuestionBar) is
+// right there for anyone who doesn't want to watch it.
+const MS_PER_TOKEN = 200
 
 export function useReveal(maxTokens: number, resetKey: string | number | null) {
   // Global, persisted "skip animations" preference (see useSkipAnimations) —
