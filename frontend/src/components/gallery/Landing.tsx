@@ -20,19 +20,19 @@ const MOBILE_QUERY = '(max-width: 700px)'
 function Hero() {
   const [imgFailed, setImgFailed] = useState(false)
   return (
-    <div style={{ textAlign: 'center', padding: '40px 4px 44px' }}>
+    <div style={{ textAlign: 'center', padding: '56px 4px 48px' }}>
       {imgFailed ? (
         <div
           style={{
-            width: 52,
-            height: 52,
-            margin: '0 auto 14px',
+            width: 96,
+            height: 96,
+            margin: '0 auto 20px',
             borderRadius: '50%',
             border: '1px solid var(--hairline)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 8,
+            fontSize: 9,
             letterSpacing: '0.08em',
             textTransform: 'uppercase',
             color: 'var(--ink-faint)',
@@ -45,7 +45,7 @@ function Hero() {
           src="/logo.png"
           onError={() => setImgFailed(true)}
           alt="pollen"
-          style={{ width: 52, height: 52, margin: '0 auto 14px', display: 'block', objectFit: 'contain' }}
+          style={{ width: 96, height: 96, margin: '0 auto 20px', display: 'block', objectFit: 'contain' }}
         />
       )}
       <h1
@@ -83,17 +83,18 @@ function CardTile({ card, onClick }: { card: GalleryCard; onClick: () => void })
         font: 'inherit',
       }}
     >
-      {/* Real card images are being produced separately — cards/*.png may
-          not exist yet. A plain hairline block reads as "no image" rather
+      {/* Card art is square at the source, so the frame is square too rather
+          than cropping into a wide aspect ratio. If an image 404s (not
+          produced yet), a plain hairline block reads as "no image" rather
           than a broken-image glyph, without ever hardcoding a path. */}
       {imgFailed ? (
-        <div style={{ aspectRatio: '16 / 10', background: 'var(--surface-inset)', borderBottom: '1px solid var(--hairline)' }} />
+        <div style={{ aspectRatio: '1 / 1', background: 'var(--surface-inset)', borderBottom: '1px solid var(--hairline)' }} />
       ) : (
         <img
           src={`/${card.image}`}
           onError={() => setImgFailed(true)}
           alt=""
-          style={{ display: 'block', width: '100%', aspectRatio: '16 / 10', objectFit: 'cover', borderBottom: '1px solid var(--hairline)' }}
+          style={{ display: 'block', width: '100%', aspectRatio: '1 / 1', objectFit: 'cover', borderBottom: '1px solid var(--hairline)' }}
         />
       )}
       <div style={{ padding: '12px 14px' }}>

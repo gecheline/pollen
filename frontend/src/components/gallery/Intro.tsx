@@ -3,9 +3,8 @@
 // index.json data, unlike the card grid below it — there's nothing per-model
 // or per-deploy about it), provided verbatim; this component only lays it
 // out. The source copy included bracketed "[visual: ...]" notes describing
-// what each placeholder should eventually show — those are authoring notes,
-// not copy, so they're not rendered; a plain placeholder box stands in for
-// the real image until one exists.
+// an image per beat — decided against them (text-only), so there's no
+// placeholder here to eventually swap out.
 
 const BEATS: { title: string; body: string }[] = [
   {
@@ -21,28 +20,6 @@ const BEATS: { title: string; body: string }[] = [
     body: 'Most tools that mix perspectives do it as a conversation — one expert speaks, then another, then someone summarizes. This works differently. Before a single word is chosen, the probabilities from several perspectives are blended together directly, under the hood. Not a panel discussion — one answer, made of more than one mind at once.',
   },
 ]
-
-function VisualPlaceholder() {
-  return (
-    <div
-      style={{
-        aspectRatio: '4 / 3',
-        border: '1px dashed var(--hairline)',
-        background: 'var(--surface-inset)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: 9,
-        letterSpacing: '0.1em',
-        textTransform: 'uppercase',
-        color: 'var(--ink-faint)',
-        marginTop: 14,
-      }}
-    >
-      image
-    </div>
-  )
-}
 
 export default function IntroSection() {
   return (
@@ -69,7 +46,6 @@ export default function IntroSection() {
               {beat.title}
             </h2>
             <p style={{ margin: 0, fontSize: 12, lineHeight: 1.65, color: 'var(--ink-muted)' }}>{beat.body}</p>
-            <VisualPlaceholder />
           </div>
         ))}
       </div>
