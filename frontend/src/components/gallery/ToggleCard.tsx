@@ -58,12 +58,24 @@ export default function ToggleCard({ card, vocabPoints, mapLimits, isDark }: Lay
   const defs = buildPanelDefs(card)
   const lensAccents = buildLensAccents(card)
 
-  const baselineReveal = useReveal(turn.n_tokens.baseline ?? 0, loaded ? 'baseline' : null)
+  // maxTokens gated on `loaded`, not just resetKey — turn.n_tokens is
+  // known synchronously (it's baked into card, no fetch needed) well
+  // before the actual panel text (`loaded`) finishes its async fetch.
+  // Passing the real count through while resetKey is still null used to
+  // mean useReveal's very first mount locked in "fully revealed" (null
+  // resetKey reads as "nothing to animate, render complete") — then the
+  // reset effect fired one render later, once resetKey went real, and
+  // wiped it back to 0 to actually start the animation. Net effect: the
+  // whole answer flashed fully visible for a frame, then got yanked back
+  // to blank before typing in. Keeping maxTokens at 0 until loaded is
+  // truthy keeps that first "complete" state trivially/invisibly empty
+  // instead.
+  const baselineReveal = useReveal(loaded ? turn.n_tokens.baseline ?? 0 : 0, loaded ? 'baseline' : null)
   // card.lenses has a fixed length for the lifetime of this component (the
   // same card never changes its lens list), so mapping it to hook calls is
   // safe — the number of hook calls per render never varies.
   const lensReveals = card.lenses.map(lens =>
-    useReveal(turn.n_tokens[lens.panel_id] ?? 0, loaded && everShown.has(lens.panel_id) ? lens.panel_id : null),
+    useReveal(loaded ? turn.n_tokens[lens.panel_id] ?? 0 : 0, loaded && everShown.has(lens.panel_id) ? lens.panel_id : null),
   )
 
   if (!loaded) return <p style={{ fontSize: 11, color: 'var(--ink-faint)' }}>Loading…</p>
