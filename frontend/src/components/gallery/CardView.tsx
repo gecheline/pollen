@@ -11,6 +11,7 @@ import { assertGalleryModelMatches } from '../../lib/gallery'
 import { loadVocabMap, type VocabManifest } from '../../lib/loadVocabMap'
 import { MAP_LIMITS } from '../../lib/mapLimits'
 import { SkipAnimationsProvider } from '../../lib/useSkipAnimations'
+import { SCATTER_INFO_TEXT } from '../../lib/scatterInfo'
 import type { VocabPoint } from '../../types'
 import ToggleCard from './ToggleCard'
 import TurnsCard from './TurnsCard'
@@ -21,9 +22,10 @@ import ObservationsPanel from './ObservationsPanel'
 // convention as the local app's ModelEntry.dir / MAP_LIMITS keys.
 const GALLERY_MODEL_DIR = 'mlx-community__Llama-3.2-3B-Instruct-4bit'
 
-// Spec §6, verbatim.
-export const SCATTER_INFO_TEXT =
-  "This is a 2D view of the model's embedding space. Embeddings are vector — numeric — representations of words, and this shows the model's whole internal vocabulary as a cloud. It's been squished from many dimensions down to two so it can be drawn at all, so keep in mind the real thing is far more complex than the map can show."
+// Re-exported for the other gallery layout files, which already import it
+// from here — the shared copy itself now lives in lib/scatterInfo.ts so
+// the local app can use the identical text on its own map.
+export { SCATTER_INFO_TEXT }
 
 export interface LayoutProps {
   card: GalleryCard

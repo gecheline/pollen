@@ -17,6 +17,7 @@ import {
 import { loadVocabMap, assertAssetsMatchModel, type ModelEntry } from './lib/loadVocabMap'
 import { buildTraceScales, buildSurprisalScale } from './lib/scales'
 import { MAP_LIMITS } from './lib/mapLimits'
+import { SCATTER_INFO_TEXT } from './lib/scatterInfo'
 import TopBar, { type ModelStatus } from './components/TopBar'
 import QuestionBar from './components/QuestionBar'
 import LensRail from './components/LensRail'
@@ -633,6 +634,7 @@ export default function App() {
                 currentQuestion={askedQuestionRef.current}
                 hover={hoverByPanel[def.id] ?? null}
                 onHover={h => setHoverByPanel(prev => ({ ...prev, [def.id]: h }))}
+                mapInfo={SCATTER_INFO_TEXT}
               />
             ))}
           </div>

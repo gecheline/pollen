@@ -11,8 +11,21 @@
 // same WCAG treatment as TokenText's mixed-panel color); the border
 // doesn't need that (a shape, not text — WCAG's looser 3:1 UI-component
 // threshold already clears for the whole palette).
+//
+// The popover portals into document.body instead of rendering as a normal
+// absolutely-positioned sibling. Both of App.tsx's panel rows (the map row
+// and the trace row) set overflow: hidden on themselves — needed so the
+// flex/minHeight:0 layout actually clips each panel's own internal scroll
+// region instead of overflowing the viewport — and a plain in-place
+// popover positioned to open "above" the trace row got silently clipped
+// by exactly that overflow:hidden, i.e. it rendered but was invisible
+// behind the row above it. A portal escapes that ancestor entirely: it's
+// positioned in fixed/viewport coordinates computed from the button's own
+// getBoundingClientRect, so no ancestor's overflow or stacking context
+// can clip or bury it.
 
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { textSafeAccent } from '../lib/textSafeAccent'
 
 interface InfoButtonProps {
@@ -24,27 +37,74 @@ interface InfoButtonProps {
   isDark?: boolean
 }
 
+// Comfortably above anything else in the app (the Observations sidebar's
+// backdrop/panel sit at 40/41) — a portaled popover should never lose to
+// another overlay by accident.
+const POPOVER_Z_INDEX = 2000
+
 export default function InfoButton({ children, align = 'right', side = 'below', width = 220, accent, isDark = false }: InfoButtonProps) {
   const [pinned, setPinned] = useState(false)
   const [hovering, setHovering] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const [rect, setRect] = useState<DOMRect | null>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const popoverRef = useRef<HTMLDivElement>(null)
   const open = pinned || hovering
 
+  // Outside-click unpins — has to check both the button and the portaled
+  // popover, since the popover is no longer a DOM descendant of the button
+  // once it's rendered into document.body.
   useEffect(() => {
     if (!pinned) return
     const onDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setPinned(false)
+      const target = e.target as Node
+      if (buttonRef.current?.contains(target)) return
+      if (popoverRef.current?.contains(target)) return
+      setPinned(false)
     }
     document.addEventListener('mousedown', onDown)
     return () => document.removeEventListener('mousedown', onDown)
   }, [pinned])
 
+  // Measure the button's viewport position whenever the popover opens, and
+  // keep it in sync with scrolling/resizing while it's open — capture:true
+  // so scroll events from a nested scroll container (e.g. a panel's own
+  // answer text) are caught too, since scroll doesn't bubble by default.
+  useLayoutEffect(() => {
+    if (!open || !buttonRef.current) return
+    const measure = () => setRect(buttonRef.current?.getBoundingClientRect() ?? null)
+    measure()
+    window.addEventListener('resize', measure)
+    window.addEventListener('scroll', measure, true)
+    return () => {
+      window.removeEventListener('resize', measure)
+      window.removeEventListener('scroll', measure, true)
+    }
+  }, [open])
+
   const glyphColor = accent ? textSafeAccent(accent, isDark) : 'var(--ink-muted)'
   const borderColor = accent ?? (open ? 'var(--ink-muted)' : 'var(--hairline)')
 
+  const popoverStyle = rect
+    ? {
+        position: 'fixed' as const,
+        ...(side === 'below' ? { top: rect.bottom + 5 } : { bottom: window.innerHeight - rect.top + 5 }),
+        ...(align === 'left' ? { left: rect.left } : { right: window.innerWidth - rect.right }),
+        width,
+        background: 'var(--surface-raised)',
+        border: '1px solid var(--hairline)',
+        padding: '8px 10px',
+        fontSize: 10.5,
+        lineHeight: 1.55,
+        color: 'var(--ink-muted)',
+        fontFamily: 'Instrument Sans, sans-serif',
+        zIndex: POPOVER_Z_INDEX,
+      }
+    : undefined
+
   return (
-    <div ref={ref} style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
+    <div style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
       <button
+        ref={buttonRef}
         onClick={() => setPinned(p => !p)}
         onMouseEnter={() => setHovering(true)}
         onMouseLeave={() => setHovering(false)}
@@ -69,30 +129,19 @@ export default function InfoButton({ children, align = 'right', side = 'below', 
       >
         i
       </button>
-      {open && (
-        <div
-          onMouseEnter={() => setHovering(true)}
-          onMouseLeave={() => setHovering(false)}
-          style={{
-            position: 'absolute',
-            [side === 'below' ? 'top' : 'bottom']: '100%',
-            [align === 'left' ? 'left' : 'right']: 0,
-            marginTop: side === 'below' ? 5 : 0,
-            marginBottom: side === 'above' ? 5 : 0,
-            width,
-            background: 'var(--surface-raised)',
-            border: '1px solid var(--hairline)',
-            padding: '8px 10px',
-            fontSize: 10.5,
-            lineHeight: 1.55,
-            color: 'var(--ink-muted)',
-            fontFamily: 'Instrument Sans, sans-serif',
-            zIndex: 10,
-          }}
-        >
-          {children}
-        </div>
-      )}
+      {open &&
+        popoverStyle &&
+        createPortal(
+          <div
+            ref={popoverRef}
+            onMouseEnter={() => setHovering(true)}
+            onMouseLeave={() => setHovering(false)}
+            style={popoverStyle}
+          >
+            {children}
+          </div>,
+          document.body,
+        )}
     </div>
   )
 }

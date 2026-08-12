@@ -39,11 +39,14 @@ interface PanelTopProps {
   currentQuestion: string
   hover: Hover | null
   onHover: (h: Hover | null) => void
-  // Gallery-only (§6 of the gallery spec): an explanation of the scatter
-  // map itself, shown via an InfoButton pinned over its corner. Undefined
-  // (the default, and the only value the local app ever passes) renders
-  // the map exactly as it always has — nothing wraps it, nothing new
-  // mounts. Added as a prop rather than touching VocabMap.tsx itself.
+  // An explanation of the scatter map itself, shown via an InfoButton
+  // pinned over its corner — both apps pass lib/scatterInfo.ts's shared
+  // copy now (the local app used to leave this undefined and render the
+  // map with no explanation at all, which read as a real gap once every
+  // other chart on the page had its own info button). Still optional,
+  // and still added as a prop rather than touching VocabMap.tsx itself,
+  // since undefined renders the map exactly as it always has — nothing
+  // wraps it, nothing new mounts.
   mapInfo?: ReactNode
   // Gallery-only: the local app is a fixed-viewport workspace (App.tsx's
   // 100vh/overflow:hidden root) where each panel's answer text scrolls
