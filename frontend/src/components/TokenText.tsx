@@ -12,13 +12,16 @@
 // minority of words on purpose: bolding everything the tint touches would
 // just make the passage heavier, not more legible.
 //
-// The mixed panel's dominant-lens color is run through textSafeAccent
-// first — several accents on their own sit under WCAG's 4.5:1 minimum for
-// text against pollen's surfaces (magenta as low as 3.54:1 in light mode),
-// which was a real, reported "hard to read" problem, not a theoretical
-// one. The lens-panel divergence tint isn't touched the same way: it's
-// always blended with ink (capped at 65%), and even at that cap every
-// accent already clears 4.5:1, so there's nothing to fix there.
+// Both the mixed panel's dominant-lens color and the lens panel's own
+// divergence-tint highlight are run through textSafeAccent before they
+// touch a token's `color` — several accents on their own sit under WCAG's
+// 4.5:1 minimum for text against pollen's surfaces (magenta as low as
+// 3.54:1 in light mode), which was a real, reported "hard to read"
+// problem, not a theoretical one. Decorative uses of these same accents —
+// dots, vocab map points, trace fills — stay on the raw, un-adjusted hex;
+// only text goes through textSafeAccent, so "the same shade as the
+// pollinator dots" holds (same hue/family) while the text itself reads
+// noticeably more vividly than the dot's own muted fill.
 //
 // Rendered as real DOM spans (not canvas) so the answer stays selectable and
 // copyable, per spec.
@@ -91,7 +94,7 @@ export default function TokenText({
           // A lens panel's own token (baseline tokens have no logRatio and
           // fall through to plain ink instead).
           const tint = opacityMax > opacityMin ? (opacity - opacityMin) / (opacityMax - opacityMin) : 0
-          if (tint > 0) color = `color-mix(in srgb, ${accent} ${Math.round(tint * MAX_LENS_TINT * 100)}%, var(--ink))`
+          if (tint > 0) color = `color-mix(in srgb, ${textSafeAccent(accent, isDark)} ${Math.round(tint * MAX_LENS_TINT * 100)}%, var(--ink))`
           bold = tint > BOLD_TINT_THRESHOLD
         }
         return (
