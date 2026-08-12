@@ -1,12 +1,19 @@
-// "toggle" layout (2+2): baseline always shown, un-toggleable; each
-// pollinator independently on/off; no mixed panel, no combine-mode UI
-// anywhere — this card never constructs a mixed panel at all, so there's
-// nothing to hide (§8: absent beats greyed out).
+// "toggle" layout (2+2): baseline always shown, pinned left, un-toggleable;
+// each pollinator independently on/off on the right, past a break in the
+// grid; no mixed panel, no combine-mode UI anywhere — this card never
+// constructs a mixed panel at all, so there's nothing to hide (§8: absent
+// beats greyed out).
 //
 // Single turn, so "fetch panel files per turn, on demand" (spec §2) means
 // fetching once, here, when the card opens — not per toggle. Toggling
 // only changes visibility and (the first time) triggers that one panel's
 // own reveal; the data's already in hand.
+//
+// Its own toggle state, not the shared usePollinatorToggle other layouts
+// use: this card additionally needs `everShown` (so a lens revealed once
+// never replays just from toggling off and back on), which the other
+// three layouts — where every panel shares one turn-level reveal, not an
+// independent per-panel one — have no use for.
 
 import { useEffect, useState } from 'react'
 import type { LayoutProps } from './CardView'
@@ -14,6 +21,7 @@ import { loadPanelFile } from '../../lib/gallery'
 import { useReveal } from '../../lib/useReveal'
 import { buildPanelDefs, buildLensAccents } from './panelDefs'
 import PanelGrid, { type GridPanel } from './PanelGrid'
+import PollinatorToggleBar from './PollinatorToggleBar'
 import GalleryQuestionBar from './GalleryQuestionBar'
 import { SCATTER_INFO_TEXT } from './CardView'
 import type { PanelData, VocabActivation } from '../../types'
@@ -66,70 +74,28 @@ export default function ToggleCard({ card, vocabPoints, mapLimits, isDark }: Lay
     useReveal(turn.n_tokens[lens.panel_id] ?? 0, loaded && everShown.has(lens.panel_id) ? lens.panel_id : null),
   )
 
-  if (!loaded) return <p style={{ fontSize: 11, color: 'var(--ink-faint)' }}>Loading…</p>
+  if (!loaded) return <p style={{ fontSize: 12.5, color: 'var(--ink-faint)' }}>Loading…</p>
 
-  const panels: GridPanel[] = [{ def: defs.baseline, ...loaded.baseline, revealCount: baselineReveal.revealCount }]
+  const pinned: GridPanel[] = [{ def: defs.baseline, ...loaded.baseline, revealCount: baselineReveal.revealCount }]
+  const toggleable: GridPanel[] = []
   let allDone = baselineReveal.done
   card.lenses.forEach((lens, i) => {
     if (!visible.has(lens.panel_id)) return
-    panels.push({ def: defs.lenses[lens.panel_id], ...loaded[lens.panel_id], revealCount: lensReveals[i].revealCount })
+    toggleable.push({ def: defs.lenses[lens.panel_id], ...loaded[lens.panel_id], revealCount: lensReveals[i].revealCount })
     allDone = allDone && lensReveals[i].done
   })
 
   return (
-    <div>
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 18 }}>
-        {card.lenses.map((lens, i) => {
-          const active = visible.has(lens.panel_id)
-          return (
-            <button
-              key={lens.panel_id}
-              onClick={() => toggle(lens.panel_id)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 7,
-                background: 'none',
-                border: '1px solid var(--hairline)',
-                borderRadius: 0,
-                padding: '6px 12px',
-                cursor: 'pointer',
-              }}
-            >
-              <div
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: '50%',
-                  flexShrink: 0,
-                  background: active ? defs.lenses[lens.panel_id].accent : 'transparent',
-                  border: active ? 'none' : '1px solid var(--ink-faint)',
-                }}
-              />
-              <span
-                style={{
-                  fontFamily: "'Lora', Georgia, serif",
-                  fontStyle: 'italic',
-                  fontSize: 13,
-                  color: active ? 'var(--ink)' : 'var(--ink-muted)',
-                }}
-              >
-                {lens.name}
-              </span>
-            </button>
-          )
-        })}
-      </div>
-
-      <PanelGrid
-        panels={panels}
-        vocabPoints={vocabPoints}
-        mapLimits={mapLimits}
-        isDark={isDark}
-        lensAccents={lensAccents}
-        mapInfo={SCATTER_INFO_TEXT}
-        breaker={<GalleryQuestionBar question={turn.user_message} questionActive={false} done={allDone} />}
-      />
-    </div>
+    <PanelGrid
+      pinned={pinned}
+      toggleable={toggleable}
+      toggleBar={<PollinatorToggleBar lenses={card.lenses.map(l => defs.lenses[l.panel_id])} visible={visible} onToggle={toggle} />}
+      vocabPoints={vocabPoints}
+      mapLimits={mapLimits}
+      isDark={isDark}
+      lensAccents={lensAccents}
+      mapInfo={SCATTER_INFO_TEXT}
+      breaker={<GalleryQuestionBar question={turn.user_message} questionActive={false} done={allDone} />}
+    />
   )
 }

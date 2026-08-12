@@ -12,11 +12,20 @@
 // minority of words on purpose: bolding everything the tint touches would
 // just make the passage heavier, not more legible.
 //
+// The mixed panel's dominant-lens color is run through textSafeAccent
+// first — several accents on their own sit under WCAG's 4.5:1 minimum for
+// text against pollen's surfaces (magenta as low as 3.54:1 in light mode),
+// which was a real, reported "hard to read" problem, not a theoretical
+// one. The lens-panel divergence tint isn't touched the same way: it's
+// always blended with ink (capped at 65%), and even at that cap every
+// accent already clears 4.5:1, so there's nothing to fix there.
+//
 // Rendered as real DOM spans (not canvas) so the answer stays selectable and
 // copyable, per spec.
 
 import * as d3 from 'd3'
 import type { Token, LensId, GenState } from '../types'
+import { textSafeAccent } from '../lib/textSafeAccent'
 
 interface TokenTextProps {
   tokens: Token[]
@@ -29,6 +38,7 @@ interface TokenTextProps {
   hoveredTokenIndex: number | null
   onHoverToken: (i: number | null) => void
   narrow: boolean
+  isDark: boolean
 }
 
 // How far a lens panel's tint can go at maximum emphasis — short of a full
@@ -53,9 +63,10 @@ export default function TokenText({
   hoveredTokenIndex,
   onHoverToken,
   narrow,
+  isDark,
 }: TokenTextProps) {
   if (genState === 'idle') {
-    return <span style={{ color: 'var(--ink-faint)', fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }}>—</span>
+    return <span style={{ color: 'var(--ink-faint)', fontFamily: "'JetBrains Mono', monospace", fontSize: 12.5 }}>—</span>
   }
 
   const visibleCount = Math.min(tokens.length, revealCount)
@@ -65,7 +76,7 @@ export default function TokenText({
   const [opacityMin, opacityMax] = opacityScale.range()
 
   return (
-    <p style={{ margin: 0, fontFamily: "'JetBrains Mono', monospace", fontSize: narrow ? 10 : 11, lineHeight: 1.65, color: 'var(--ink)' }}>
+    <p style={{ margin: 0, fontFamily: "'JetBrains Mono', monospace", fontSize: narrow ? 11.5 : 12.5, lineHeight: 1.65, color: 'var(--ink)' }}>
       {tokens.slice(0, visibleCount).map((t, i) => {
         const lensId = dominantLensIds?.[i]
         const opacity = opacityScale(t.surprisal)
@@ -73,8 +84,9 @@ export default function TokenText({
         let bold = false
         if (lensId && lensAccents) {
           // Mixed panel: color is lens identity, full stop — unaffected by
-          // this token's own surprisal.
-          color = lensAccents[lensId]
+          // this token's own surprisal. textSafeAccent, not the raw
+          // decorative accent (see file comment).
+          color = textSafeAccent(lensAccents[lensId], isDark)
         } else if ('logRatio' in t) {
           // A lens panel's own token (baseline tokens have no logRatio and
           // fall through to plain ink instead).

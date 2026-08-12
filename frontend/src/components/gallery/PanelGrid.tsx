@@ -1,15 +1,24 @@
-// Desktop: one row of PanelTops, an optional breaker (GalleryQuestionBar —
-// passed in by the card layout, not owned here, since a turn can span more
-// than one PanelGrid — see MixedFeaturedCard), then one row of
-// PanelBottoms — the same two/three-row split App.tsx uses for the local
-// app (PanelTop row, QuestionBar, PanelBottom row).
+// Desktop: an optional toggle bar (right-aligned, full width, above
+// everything — so pinned and toggleable panels still start at the same
+// vertical position below it, rather than the toggleable columns sitting
+// lower than the pinned ones), then one row of PanelTops split into two
+// groups — `pinned` (baseline, and mixed for the crosspollinate layouts;
+// always visible, never toggleable) and `toggleable` (individual
+// pollinators, already filtered down to just the currently-visible ones
+// by the caller) — with a shaded gap column between them when there's
+// anything to separate. An optional breaker (GalleryQuestionBar — passed
+// in by the card layout, not owned here, since a turn can span more than
+// one PanelGrid — see MixedFeaturedCard), then one row of PanelBottoms,
+// same two-group split.
 //
 // Narrow viewports (phone widths): each panel becomes its own full-width
 // block — PanelTop immediately followed by its own PanelBottom — stacked
-// top to bottom instead of squeezed side by side. Same components either
-// way, just a different arrangement of the same JSX; PanelTop/PanelBottom's
-// own `flex: 1` styling is inert outside a flex row, so no CSS fights
-// happen switching between the two.
+// top to bottom instead of squeezed side by side. Pinned panels stack
+// first, then a shaded break, then the toggle bar, then the (visible)
+// toggleable panels. Same components either way, just a different
+// arrangement of the same JSX; PanelTop/PanelBottom's own `flex: 1`
+// styling is inert outside a flex row, so no CSS fights happen switching
+// between the two.
 //
 // Owns hover state itself (App.tsx's hoverByPanel, but self-contained here
 // since no other gallery component needs to coordinate hover across
@@ -41,7 +50,15 @@ export interface GridPanel {
 }
 
 interface PanelGridProps {
-  panels: GridPanel[]
+  // Always visible, never toggleable — baseline, and mixed for the
+  // crosspollinate layouts.
+  pinned: GridPanel[]
+  // Individual pollinators — already filtered down to just the ones
+  // currently toggled on; PanelGrid doesn't own toggle state itself.
+  toggleable: GridPanel[]
+  // The pill row — rendered once, above both groups (see file comment for
+  // why it isn't scoped to sit only above the toggleable columns).
+  toggleBar?: ReactNode
   vocabPoints: VocabPoint[]
   mapLimits?: AxisLimits
   isDark: boolean
@@ -56,13 +73,30 @@ interface PanelGridProps {
 
 const MOBILE_QUERY = '(max-width: 700px)'
 
-export default function PanelGrid({ panels, vocabPoints, mapLimits, isDark, lensAccents, mapInfo, breaker }: PanelGridProps) {
+// The visible "break in the grid" between pinned and toggleable panels —
+// a shaded, double-bordered column (desktop) or full-width strip
+// (mobile), distinct from the hairline seams between individual panels so
+// it reads as a structural divide, not just another column boundary.
+function GridGap({ vertical }: { vertical: boolean }) {
+  return (
+    <div
+      style={
+        vertical
+          ? { width: 28, flexShrink: 0, borderLeft: '1px solid var(--hairline)', borderRight: '1px solid var(--hairline)', background: 'var(--surface-inset)' }
+          : { height: 20, borderTop: '1px solid var(--hairline)', borderBottom: '1px solid var(--hairline)', background: 'var(--surface-inset)' }
+      }
+    />
+  )
+}
+
+export default function PanelGrid({ pinned, toggleable, toggleBar, vocabPoints, mapLimits, isDark, lensAccents, mapInfo, breaker }: PanelGridProps) {
   const [hoverByPanel, setHoverByPanel] = useState<Record<string, Hover | null>>({})
   const isMobile = useMediaQuery(MOBILE_QUERY)
+  const allPanels = [...pinned, ...toggleable]
   // Stacked mobile panels are each full device width — the cramped-width
   // "narrow" treatment (smaller font/padding, for >= 4 columns squeezed
   // side by side) doesn't apply there regardless of how many panels exist.
-  const narrow = !isMobile && panels.length >= 4
+  const narrow = !isMobile && allPanels.length >= 4
   const genState: GenState = 'complete' // gallery panels are always fully-loaded, never "generating" mid-stream
 
   // Domains sized to what's actually in these panels (their full,
@@ -73,7 +107,7 @@ export default function PanelGrid({ panels, vocabPoints, mapLimits, isDark, lens
   let maxKl = 2
   let minSurprisal = 0
   let maxSurprisal = 4
-  for (const p of panels) {
+  for (const p of allPanels) {
     for (const t of p.data.tokens) {
       minSurprisal = Math.min(minSurprisal, t.surprisal)
       maxSurprisal = Math.max(maxSurprisal, t.surprisal)
@@ -128,14 +162,25 @@ export default function PanelGrid({ panels, vocabPoints, mapLimits, isDark, lens
       traceVisible={true}
       hover={hoverByPanel[p.def.id] ?? null}
       onHover={onHover(p.def.id)}
+      isDark={isDark}
     />
   )
+
+  const hasGap = toggleable.length > 0 && pinned.length > 0
 
   if (isMobile) {
     return (
       <div style={{ border: '1px solid var(--hairline)', marginBottom: 24 }}>
-        {panels.map((p, i) => (
-          <div key={p.def.id} style={{ borderBottom: i < panels.length - 1 || breaker ? '1px solid var(--hairline)' : 'none' }}>
+        {pinned.map((p, i) => (
+          <div key={p.def.id} style={{ borderBottom: i < pinned.length - 1 || hasGap || toggleBar ? '1px solid var(--hairline)' : 'none' }}>
+            {top(p)}
+            {bottom(p)}
+          </div>
+        ))}
+        {hasGap && <GridGap vertical={false} />}
+        {toggleBar && <div style={{ display: 'flex', justifyContent: 'center', padding: '10px', borderBottom: '1px solid var(--hairline)' }}>{toggleBar}</div>}
+        {toggleable.map((p, i) => (
+          <div key={p.def.id} style={{ borderBottom: i < toggleable.length - 1 ? '1px solid var(--hairline)' : 'none' }}>
             {top(p)}
             {bottom(p)}
           </div>
@@ -147,9 +192,22 @@ export default function PanelGrid({ panels, vocabPoints, mapLimits, isDark, lens
 
   return (
     <div style={{ border: '1px solid var(--hairline)', borderBottom: 'none', marginBottom: 24 }}>
-      <div style={{ display: 'flex' }}>{panels.map(top)}</div>
+      {toggleBar && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', padding: '8px 10px', borderBottom: '1px solid var(--hairline)' }}>
+          {toggleBar}
+        </div>
+      )}
+      <div style={{ display: 'flex' }}>
+        {pinned.map(top)}
+        {hasGap && <GridGap vertical />}
+        {toggleable.map(top)}
+      </div>
       {breaker}
-      <div style={{ display: 'flex', borderTop: breaker ? 'none' : '1px solid var(--hairline)' }}>{panels.map(bottom)}</div>
+      <div style={{ display: 'flex', borderTop: breaker ? 'none' : '1px solid var(--hairline)' }}>
+        {pinned.map(bottom)}
+        {hasGap && <GridGap vertical />}
+        {toggleable.map(bottom)}
+      </div>
     </div>
   )
 }

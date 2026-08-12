@@ -56,6 +56,12 @@ class CaptureRequest(BaseModel):
     # Absolute path from a prior POST /api/capture/choose-folder (a native
     # folder picker — see main.py). None uses the default ~/.pollen/captures.
     folder: str | None = None
+    # The user's own free-text notes on this conversation, from the
+    # Observations sidebar — saved alongside the run itself so a capture is
+    # a complete, self-contained record. Meant to eventually round-trip
+    # into the gallery: someone submitting a capture for consideration is
+    # submitting their observations along with it, not just the raw frames.
+    observations: str | None = None
 
 
 def with_length(system_prompt: str, length_hint: str) -> str:

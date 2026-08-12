@@ -6,8 +6,15 @@
   --surface-raised: #f4f1e8;
   --surface-inset: #e2dfd5;
   --ink: #1c1a17;
-  --ink-muted: #7a7670;
-  --ink-faint: #b8b4ac;
+  /* --ink-muted/--ink-faint (both modes) are WCAG-AA-checked against
+     --surface, not eyeballed: the originals sat at 3.75:1 / 1.72:1 here
+     (need >= 4.5:1 for normal text; --ink-faint targets >= 3:1, the
+     "large text/UI component" minimum — it's never body copy, always a
+     secondary caption or placeholder next to a fully-contrasted primary
+     label). Darkened (light) / lightened (dark) just enough to clear
+     those, same hue. */
+  --ink-muted: #6d6964;
+  --ink-faint: #8b8578;
   --hairline: #d0ccc2;
 
   --accent-plum:    #7b5ea7;
@@ -29,7 +36,7 @@
      near-white --ink) — deliberately fixed, not redeclared in .dark below,
      so it reads the same muted way regardless of which theme is active. */
   --banner-surface: #e2dfd5;
-  --banner-ink: #7a7872;
+  --banner-ink: #62615c; /* WCAG-checked against --banner-surface specifically, same reasoning as --ink-muted above */
 }
 
 .dark {
@@ -37,8 +44,8 @@
   --surface-raised: #1e1d1b;
   --surface-inset: #0f0e0d;
   --ink: #e2ddd5;
-  --ink-muted: #7a7872;
-  --ink-faint: #38352f;
+  --ink-muted: #828079;
+  --ink-faint: #6a6459;
   --hairline: #2b2926;
 }
 

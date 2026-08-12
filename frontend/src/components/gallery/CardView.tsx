@@ -14,7 +14,6 @@ import { SkipAnimationsProvider } from '../../lib/useSkipAnimations'
 import type { VocabPoint } from '../../types'
 import ToggleCard from './ToggleCard'
 import TurnsCard from './TurnsCard'
-import MixedFeaturedCard from './MixedFeaturedCard'
 import MixedInlineCard from './MixedInlineCard'
 import ObservationsPanel from './ObservationsPanel'
 
@@ -81,7 +80,7 @@ export default function CardView({
               border: 'none',
               cursor: 'pointer',
               padding: 0,
-              fontSize: 9,
+              fontSize: 10.5,
               letterSpacing: '0.1em',
               textTransform: 'uppercase',
               color: 'var(--ink-muted)',
@@ -96,7 +95,7 @@ export default function CardView({
               border: '1px solid var(--hairline)',
               cursor: 'pointer',
               padding: '6px 12px',
-              fontSize: 9,
+              fontSize: 10.5,
               letterSpacing: '0.1em',
               textTransform: 'uppercase',
               color: 'var(--ink-muted)',
@@ -106,31 +105,22 @@ export default function CardView({
           </button>
         </div>
 
-        <h1 style={{ margin: '0 0 6px', fontFamily: "'Lora', Georgia, serif", fontStyle: 'italic', fontWeight: 400, fontSize: 22, color: 'var(--ink)' }}>
+        <h1 style={{ margin: '0 0 6px', fontFamily: "'Lora', Georgia, serif", fontStyle: 'italic', fontWeight: 400, fontSize: 25.5, color: 'var(--ink)' }}>
           {card.title}
         </h1>
-        <p style={{ margin: '0 0 18px', fontSize: 12, lineHeight: 1.6, color: 'var(--ink-muted)', maxWidth: 640 }}>{card.subtitle}</p>
+        <p style={{ margin: '0 0 20px', fontSize: 14, lineHeight: 1.6, color: 'var(--ink-muted)', maxWidth: 640 }}>{card.subtitle}</p>
 
-        {card.explainer && (
-          <p
-            style={{
-              margin: '0 0 20px',
-              padding: '10px 14px',
-              border: '1px solid var(--hairline)',
-              fontSize: 11,
-              lineHeight: 1.6,
-              color: 'var(--ink-muted)',
-              maxWidth: 720,
-            }}
-          >
-            {card.explainer}
-          </p>
-        )}
+        {/* card.explainer (a short "what this chart does" line) used to
+            render here as its own bordered paragraph — dropped now that
+            it's redundant with the (i) info popovers on each panel: two
+            places saying almost the same thing read as clutter, not
+            reinforcement. The field stays in the data/type — just unused
+            here — rather than requiring a rebake to remove it. */}
 
-        {error && <p style={{ fontSize: 11, color: 'var(--ink-muted)' }}>{error}</p>}
+        {error && <p style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>{error}</p>}
 
         {!vocabPoints ? (
-          <p style={{ fontSize: 11, color: 'var(--ink-faint)' }}>Loading…</p>
+          <p style={{ fontSize: 12.5, color: 'var(--ink-faint)' }}>Loading…</p>
         ) : (
           (() => {
             const layoutProps: LayoutProps = { card, vocabPoints, mapLimits: MAP_LIMITS[GALLERY_MODEL_DIR], isDark }
@@ -139,12 +129,13 @@ export default function CardView({
                 return <ToggleCard {...layoutProps} />
               case 'turns':
                 return <TurnsCard {...layoutProps} />
+              // mixed_featured (universe) and mixed_inline (art) render
+              // identically now — see MixedInlineCard's file comment.
               case 'mixed_featured':
-                return <MixedFeaturedCard {...layoutProps} />
               case 'mixed_inline':
                 return <MixedInlineCard {...layoutProps} />
               default:
-                return <p style={{ fontSize: 11, color: 'var(--ink-muted)' }}>Unknown layout "{card.layout}".</p>
+                return <p style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>Unknown layout "{card.layout}".</p>
             }
           })()
         )}

@@ -39,13 +39,13 @@ export default function IntroSection() {
                 fontFamily: "'Lora', Georgia, serif",
                 fontStyle: 'italic',
                 fontWeight: 400,
-                fontSize: 16,
+                fontSize: 18.5,
                 color: 'var(--ink)',
               }}
             >
               {beat.title}
             </h2>
-            <p style={{ margin: 0, fontSize: 12, lineHeight: 1.65, color: 'var(--ink-muted)' }}>{beat.body}</p>
+            <p style={{ margin: 0, fontSize: 14, lineHeight: 1.65, color: 'var(--ink-muted)' }}>{beat.body}</p>
           </div>
         ))}
       </div>

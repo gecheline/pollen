@@ -27,6 +27,8 @@ interface TopBarProps {
   modelLoadingLabel: string
   captureReady: boolean
   onSaveCapture: (slug: string, folder: string | null) => Promise<CaptureResult>
+  observationsOpen: boolean
+  onToggleObservations: () => void
 }
 
 // mlx-community/Llama-3.2-3B-Instruct-4bit -> Llama-3.2-3B-Instruct-4bit —
@@ -110,7 +112,7 @@ function SaveControl({
 
   if (savedFilename) {
     return (
-      <span style={{ fontSize: 9, letterSpacing: '0.08em', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>Saved: {savedFilename}</span>
+      <span style={{ fontSize: 10.5, letterSpacing: '0.08em', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>Saved: {savedFilename}</span>
     )
   }
 
@@ -136,7 +138,7 @@ function SaveControl({
             borderRadius: 0,
             padding: '3px 6px',
             fontFamily: 'Instrument Sans, sans-serif',
-            fontSize: 9,
+            fontSize: 10.5,
             letterSpacing: '0.04em',
             color: 'var(--ink)',
           }}
@@ -145,7 +147,7 @@ function SaveControl({
           <span
             title={folder ?? '~/.pollen/captures (default)'}
             style={{
-              fontSize: 8,
+              fontSize: 9,
               color: 'var(--ink-faint)',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
@@ -168,7 +170,7 @@ function SaveControl({
               border: 'none',
               cursor: pickingFolder ? 'wait' : 'pointer',
               padding: 0,
-              fontSize: 8,
+              fontSize: 9,
               letterSpacing: '0.06em',
               textTransform: 'uppercase',
               color: 'var(--ink-muted)',
@@ -193,7 +195,7 @@ function SaveControl({
         border: 'none',
         cursor: enabled ? 'pointer' : 'default',
         padding: 0,
-        fontSize: 9,
+        fontSize: 10.5,
         letterSpacing: '0.1em',
         textTransform: 'uppercase',
         color: enabled ? 'var(--ink-muted)' : 'var(--ink-faint)',
@@ -221,6 +223,8 @@ export default function TopBar({
   modelLoadingLabel,
   captureReady,
   onSaveCapture,
+  observationsOpen,
+  onToggleObservations,
 }: TopBarProps) {
   return (
     <div style={{ flexShrink: 0, height: 52, display: 'flex', alignItems: 'stretch', borderBottom: '1px solid var(--hairline)' }}>
@@ -236,7 +240,7 @@ export default function TopBar({
           background: 'var(--surface-raised)',
         }}
       >
-        <span style={{ fontSize: 9, letterSpacing: '0.20em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}>pollen</span>
+        <span style={{ fontSize: 10.5, letterSpacing: '0.20em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}>pollen</span>
       </div>
 
       {/* Model + Length */}
@@ -244,9 +248,9 @@ export default function TopBar({
         <div>
           <Label style={{ marginBottom: 3 }}>Model</Label>
           {modelStatus === 'loading' ? (
-            <span style={{ fontSize: 11, color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>{modelLoadingLabel}</span>
+            <span style={{ fontSize: 12.5, color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>{modelLoadingLabel}</span>
           ) : models.length === 0 ? (
-            <span style={{ fontSize: 11, color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>Loading…</span>
+            <span style={{ fontSize: 12.5, color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>Loading…</span>
           ) : (
             <select value={selectedModelName ?? ''} onChange={e => onSelectModel(e.target.value)}>
               {models.map(m => (
@@ -270,8 +274,24 @@ export default function TopBar({
 
       {/* Panel count + mode toggle */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0 14px', flexShrink: 0, borderLeft: '1px solid var(--hairline)' }}>
-        <span style={{ fontSize: 9, color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>{panelCount} panels</span>
+        <span style={{ fontSize: 10.5, color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>{panelCount} panels</span>
         <SaveControl ready={captureReady} disabled={genState === 'generating'} onSave={onSaveCapture} />
+        <button
+          onClick={onToggleObservations}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: 0,
+            fontSize: 10.5,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: observationsOpen ? 'var(--ink-muted)' : 'var(--ink-faint)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Observations
+        </button>
         <button
           onClick={() => setTraceVisible(!traceVisible)}
           style={{
@@ -279,7 +299,7 @@ export default function TopBar({
             border: 'none',
             cursor: 'pointer',
             padding: 0,
-            fontSize: 9,
+            fontSize: 10.5,
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
             color: traceVisible ? 'var(--ink-muted)' : 'var(--ink-faint)',
@@ -295,7 +315,7 @@ export default function TopBar({
             border: 'none',
             cursor: 'pointer',
             padding: 0,
-            fontSize: 9,
+            fontSize: 10.5,
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
             color: 'var(--ink-muted)',

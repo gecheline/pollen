@@ -3,17 +3,28 @@
 // the pointer still). Click elsewhere closes it. Minimal chrome: a hairline
 // circle and a hairline-edged plate for the popover — no shadow, no radius
 // beyond the circle itself, consistent with the rest of the app.
+//
+// `accent`, when given, colors the circle's border and "i" glyph with the
+// panel's own pollinator color instead of the neutral ink-muted/hairline
+// default — every info button now visually belongs to the specific panel
+// it's attached to. The glyph goes through textSafeAccent (it's real text,
+// same WCAG treatment as TokenText's mixed-panel color); the border
+// doesn't need that (a shape, not text — WCAG's looser 3:1 UI-component
+// threshold already clears for the whole palette).
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { textSafeAccent } from '../lib/textSafeAccent'
 
 interface InfoButtonProps {
   children: ReactNode
   align?: 'left' | 'right' // which edge of the button the popover hangs from
   side?: 'above' | 'below' // which direction the popover opens
   width?: number
+  accent?: string
+  isDark?: boolean
 }
 
-export default function InfoButton({ children, align = 'right', side = 'below', width = 220 }: InfoButtonProps) {
+export default function InfoButton({ children, align = 'right', side = 'below', width = 220, accent, isDark = false }: InfoButtonProps) {
   const [pinned, setPinned] = useState(false)
   const [hovering, setHovering] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -28,6 +39,9 @@ export default function InfoButton({ children, align = 'right', side = 'below', 
     return () => document.removeEventListener('mousedown', onDown)
   }, [pinned])
 
+  const glyphColor = accent ? textSafeAccent(accent, isDark) : 'var(--ink-muted)'
+  const borderColor = accent ?? (open ? 'var(--ink-muted)' : 'var(--hairline)')
+
   return (
     <div ref={ref} style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
       <button
@@ -37,17 +51,18 @@ export default function InfoButton({ children, align = 'right', side = 'below', 
         aria-label="More detail"
         aria-expanded={open}
         style={{
-          width: 12,
-          height: 12,
+          width: 18,
+          height: 18,
           borderRadius: '50%',
-          border: `1px solid ${open ? 'var(--ink-muted)' : 'var(--hairline)'}`,
+          border: `1.5px solid ${borderColor}`,
           background: 'none',
           cursor: 'pointer',
           padding: 0,
-          fontSize: 7.5,
-          lineHeight: '10px',
+          fontSize: 11,
+          lineHeight: '14px',
           fontFamily: 'Instrument Sans, sans-serif',
-          color: 'var(--ink-muted)',
+          fontStyle: 'italic',
+          color: glyphColor,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -69,7 +84,7 @@ export default function InfoButton({ children, align = 'right', side = 'below', 
             background: 'var(--surface-raised)',
             border: '1px solid var(--hairline)',
             padding: '8px 10px',
-            fontSize: 9,
+            fontSize: 10.5,
             lineHeight: 1.55,
             color: 'var(--ink-muted)',
             fontFamily: 'Instrument Sans, sans-serif',

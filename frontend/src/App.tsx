@@ -22,6 +22,7 @@ import QuestionBar from './components/QuestionBar'
 import LensRail from './components/LensRail'
 import PanelTop, { type TurnRecord } from './components/PanelTop'
 import PanelBottom from './components/PanelBottom'
+import LocalObservationsPanel from './components/LocalObservationsPanel'
 import type { Hover } from './components/hover'
 
 // ── Initial data ───────────────────────────────────────────────────────────────
@@ -199,6 +200,13 @@ export default function App() {
   const capturedFramesRef = useRef<SSEFrame[]>([])
   const capturedRequestRef = useRef<ChatRequest | null>(null)
   const [captureReady, setCaptureReady] = useState(false)
+
+  // The Observations sidebar's own text — read by handleSaveCapture at
+  // Save time regardless of whether the sidebar happens to be open then,
+  // so state lives here rather than inside the (conditionally-rendered)
+  // panel itself.
+  const [observations, setObservations] = useState('')
+  const [observationsOpen, setObservationsOpen] = useState(false)
 
   // Conversation history, shown inside each panel above its live turn.
   // Keyed by the same semantic id every panel already uses (lens.id,
@@ -521,13 +529,20 @@ export default function App() {
     capturedFramesRef.current = []
     capturedRequestRef.current = null
     setCaptureReady(false)
+    setObservations('') // notes on the old conversation don't belong to the new one
   }
 
   async function handleSaveCapture(slug: string, folder: string | null): Promise<CaptureResult> {
     if (!capturedRequestRef.current || capturedFramesRef.current.length === 0) {
       throw new Error('nothing to save yet')
     }
-    return saveCapture({ slug, request: capturedRequestRef.current, frames: capturedFramesRef.current, folder })
+    return saveCapture({
+      slug,
+      request: capturedRequestRef.current,
+      frames: capturedFramesRef.current,
+      folder,
+      observations: observations.trim() || undefined,
+    })
   }
 
   const bannerMessage = modelError ?? generateError
@@ -564,6 +579,8 @@ export default function App() {
         modelLoadingLabel={formatModelLoadingLabel(downloadStatus)}
         captureReady={captureReady}
         onSaveCapture={handleSaveCapture}
+        observationsOpen={observationsOpen}
+        onToggleObservations={() => setObservationsOpen(o => !o)}
       />
 
       {bannerMessage && (
@@ -572,7 +589,7 @@ export default function App() {
             flexShrink: 0,
             padding: '6px 16px',
             borderBottom: '1px solid var(--hairline)',
-            fontSize: 10,
+            fontSize: 11.5,
             color: 'var(--ink-muted)',
             fontFamily: 'Instrument Sans, sans-serif',
           }}
@@ -646,11 +663,19 @@ export default function App() {
                 traceVisible={traceVisible}
                 hover={hoverByPanel[def.id] ?? null}
                 onHover={h => setHoverByPanel(prev => ({ ...prev, [def.id]: h }))}
+                isDark={dark}
               />
             ))}
           </div>
         </div>
       </div>
+
+      <LocalObservationsPanel
+        open={observationsOpen}
+        onClose={() => setObservationsOpen(false)}
+        value={observations}
+        onChange={setObservations}
+      />
     </div>
   )
 }

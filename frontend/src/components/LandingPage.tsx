@@ -36,14 +36,14 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
           fontFamily: "'Lora', Georgia, serif",
           fontStyle: 'italic',
           fontWeight: 400,
-          fontSize: 40,
+          fontSize: 46,
           color: 'var(--ink)',
         }}
       >
         pollen
       </h1>
 
-      <p style={{ margin: 0, maxWidth: 440, fontSize: 13, lineHeight: 1.65, color: 'var(--ink-muted)' }}>
+      <p style={{ margin: 0, maxWidth: 440, fontSize: 15, lineHeight: 1.65, color: 'var(--ink-muted)' }}>
         pollen asks one question through several lenses — personas layered onto the same model — and shows, word by
         word, how far each one's answer drifts from a plain baseline. Toggle pollinators on and off, blend them
         together, and watch exactly where each choice lands in the model's own vocabulary.
@@ -59,7 +59,7 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
             cursor: 'pointer',
             padding: '10px 22px',
             fontFamily: 'Instrument Sans, sans-serif',
-            fontSize: 11,
+            fontSize: 12.5,
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
             color: 'var(--ink)',
@@ -72,7 +72,7 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
           target="_blank"
           rel="noreferrer"
           style={{
-            fontSize: 10,
+            fontSize: 11.5,
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
             color: 'var(--ink-muted)',

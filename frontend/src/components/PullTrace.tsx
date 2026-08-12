@@ -228,7 +228,7 @@ export default function PullTrace({
             position: 'absolute',
             top: 2,
             right: 0,
-            fontSize: 8,
+            fontSize: 9,
             fontFamily: "'JetBrains Mono', monospace",
             color: 'var(--ink-muted)',
             background: 'var(--surface)',

@@ -5,7 +5,7 @@ export default function Label({ children, style }: { children: ReactNode; style?
     <span
       style={{
         display: 'block',
-        fontSize: 8,
+        fontSize: 9,
         letterSpacing: '0.13em',
         textTransform: 'uppercase',
         color: 'var(--ink-muted)',

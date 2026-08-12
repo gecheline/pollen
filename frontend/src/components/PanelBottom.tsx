@@ -21,6 +21,7 @@ interface PanelBottomProps {
   traceVisible: boolean
   hover: Hover | null
   onHover: (h: Hover | null) => void
+  isDark: boolean
 }
 
 const CAPTION_ROW_HEIGHT = 20 // reserved for the one-line caption + info button, above the chart
@@ -44,6 +45,7 @@ export default function PanelBottom({
   traceVisible,
   hover,
   onHover,
+  isDark,
 }: PanelBottomProps) {
   const hoveredTokenIndex = hover?.index ?? null
   const hoveredFromTrace = hover?.source === 'trace'
@@ -69,7 +71,7 @@ export default function PanelBottom({
       <div style={{ flex: 1, minWidth: 0, borderRight: '1px solid var(--hairline)' }}>
         <div style={{ padding: tracePadding, borderTop: '1px solid var(--hairline)' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, height: CAPTION_ROW_HEIGHT }}>
-            <p style={{ margin: 0, fontSize: 8, lineHeight: 1.4, color: 'var(--ink-muted)', fontFamily: 'Instrument Sans, sans-serif', flex: 1 }}>
+            <p style={{ margin: 0, fontSize: 9, lineHeight: 1.4, color: 'var(--ink-muted)', fontFamily: 'Instrument Sans, sans-serif', flex: 1 }}>
               {BASELINE_TRACE_CAPTION}
             </p>
           </div>
@@ -97,10 +99,10 @@ export default function PanelBottom({
     <div style={{ flex: 1, minWidth: 0, borderRight: '1px solid var(--hairline)' }}>
       <div style={{ padding: tracePadding, borderTop: '1px solid var(--hairline)' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, height: CAPTION_ROW_HEIGHT }}>
-          <p style={{ margin: 0, fontSize: 8, lineHeight: 1.4, color: 'var(--ink-muted)', fontFamily: 'Instrument Sans, sans-serif', flex: 1 }}>
+          <p style={{ margin: 0, fontSize: 9, lineHeight: 1.4, color: 'var(--ink-muted)', fontFamily: 'Instrument Sans, sans-serif', flex: 1 }}>
             {TRACE_CAPTION}
           </p>
-          <InfoButton side="above" align="right" width={240}>
+          <InfoButton side="above" align="right" width={240} accent={accent} isDark={isDark}>
             {TRACE_DEEP_EXPLANATION}
           </InfoButton>
         </div>

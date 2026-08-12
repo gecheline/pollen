@@ -32,19 +32,19 @@ export default function ObservationsPanel({ open, onClose }: { open: boolean; on
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-          <span style={{ fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+          <span style={{ fontSize: 10.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
             Observations
           </span>
           <button
             onClick={onClose}
             aria-label="Close"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 18, lineHeight: 1, color: 'var(--ink-muted)' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 20.5, lineHeight: 1, color: 'var(--ink-muted)' }}
           >
             ×
           </button>
         </div>
         {PLACEHOLDER_PARAGRAPHS.map((p, i) => (
-          <p key={i} style={{ margin: '0 0 14px', fontSize: 12, lineHeight: 1.65, color: 'var(--ink-muted)' }}>
+          <p key={i} style={{ margin: '0 0 14px', fontSize: 14, lineHeight: 1.65, color: 'var(--ink-muted)' }}>
             {p}
           </p>
         ))}

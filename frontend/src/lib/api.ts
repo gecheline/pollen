@@ -93,6 +93,7 @@ export interface CaptureListEntry {
   slug: string
   user_message: string
   bytes: number
+  observations: string | null
 }
 
 // request/frames travel as plain unknown values, not typed against
@@ -105,6 +106,7 @@ export async function saveCapture(payload: {
   request: unknown
   frames: unknown[]
   folder?: string | null
+  observations?: string
 }): Promise<CaptureResult> {
   return postJSON('/api/capture', payload)
 }
