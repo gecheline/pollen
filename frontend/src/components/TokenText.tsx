@@ -1,16 +1,29 @@
 // The answer text as a plottable object (§4.1) — one styled span per token
-// instead of a flat string slice. Opacity always means surprisal (every
-// panel). Color: the mixed panel tints every token by whichever lens
-// dominated it; a single lens panel has no "which lens" question to answer
-// (it's already all one lens), so instead it tints its own already-
-// emphasized words — the same ones surprisal already pushes to full
-// opacity — toward its own accent, reusing that exact opacity signal as
-// the tint strength rather than introducing a second metric. Baseline has
-// no accent worth popping toward, so it stays plain ink regardless. The
-// genuine standouts (top of that same tint range) also go bold — a second,
-// coarser cue on top of the continuous color/opacity ones, reserved for a
-// minority of words on purpose: bolding everything the tint touches would
-// just make the passage heavier, not more legible.
+// instead of a flat string slice. Opacity means surprisal for plain-ink
+// tokens (every panel falls back to this — it's how baseline shows which
+// words were more/less expected). Color: the mixed panel tints every token
+// by whichever lens dominated it; a single lens panel has no "which lens"
+// question to answer (it's already all one lens), so instead it tints its
+// own already-emphasized words — the same ones surprisal already pushes
+// toward the top of the tint range — toward its own accent, reusing that
+// signal as the tint strength rather than introducing a second metric.
+// Baseline has no accent worth popping toward, so it stays plain ink
+// regardless. The genuine standouts (top of that same tint range) also go
+// bold — a second, coarser cue on top of the continuous color/tint ones,
+// reserved for a minority of words on purpose: bolding everything the
+// tint touches would just make the passage heavier, not more legible.
+//
+// Once a token actually carries a lens color — mixed panel identity, or a
+// lens panel's own tint — that color renders at full opacity, not the
+// surprisal-driven fade. The color itself already carries the meaning
+// there (which lens, or how much this word diverged, via the tint's own
+// color-mix percentage); layering the surprisal fade on top of it as well
+// just washed the color back out toward the background for every
+// unsurprising token — which is most of them — leaving only the rare
+// high-surprisal outlier looking like the "real" color and everything
+// else looking like a faded mistake, even though they're the identical
+// hex. Surprisal-as-opacity stays exactly as before for plain ink, where
+// it's still the only signal being carried.
 //
 // Both the mixed panel's dominant-lens color and the lens panel's own
 // divergence-tint highlight are run through textSafeAccent before they
@@ -97,6 +110,10 @@ export default function TokenText({
           if (tint > 0) color = `color-mix(in srgb, ${textSafeAccent(accent, isDark)} ${Math.round(tint * MAX_LENS_TINT * 100)}%, var(--ink))`
           bold = tint > BOLD_TINT_THRESHOLD
         }
+        // Plain ink still fades with surprisal; an actual lens color is
+        // never diluted by it (see file comment) — that's what kept
+        // reading as "most of the passage is a duller, different orange."
+        const spanOpacity = color === 'var(--ink)' ? opacity : 1
         return (
           <span
             key={i}
@@ -104,7 +121,7 @@ export default function TokenText({
             onMouseLeave={() => onHoverToken(null)}
             style={{
               color,
-              opacity,
+              opacity: spanOpacity,
               fontWeight: bold ? 700 : 400,
               background: hoveredTokenIndex === i ? 'color-mix(in srgb, var(--ink) 10%, transparent)' : 'transparent',
               transition: 'background 0.1s',
