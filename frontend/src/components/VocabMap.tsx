@@ -23,6 +23,7 @@ import { useCallback, useLayoutEffect, useRef } from 'react'
 import * as d3 from 'd3'
 import type { VocabPoint, VocabActivation, GenState } from '../types'
 import type { AxisLimits } from '../lib/mapLimits'
+import { textSafeAccent } from '../lib/textSafeAccent'
 
 const BASE_R = 0.65 // dormant-cloud dot radius, css px
 const ACTIVATED_R = 1.7
@@ -249,11 +250,14 @@ export default function VocabMap({ vocabPoints, activations, revealCount, accent
             position: 'absolute',
             left: 5,
             bottom: 5,
-            fontSize: 7,
+            fontSize: 9,
             letterSpacing: '1.3px',
             fontFamily: 'Instrument Sans, sans-serif',
-            color: accent,
-            opacity: 0.7,
+            // textSafeAccent, not the raw decorative accent — this is real
+            // text (a status label), so it gets the same WCAG treatment as
+            // TokenText's mixed-panel color. No opacity fade on top of it:
+            // that would undercut the contrast the color was chosen for.
+            color: textSafeAccent(accent, isDark),
             pointerEvents: 'none',
           }}
         >

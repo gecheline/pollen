@@ -78,7 +78,7 @@ function AddCustomLens({ lenses, setLenses }: { lenses: Lens[]; setLenses: Dispa
           cursor: 'pointer',
           padding: '10px 14px',
           textAlign: 'left',
-          fontSize: 11,
+          fontSize: 12.5,
           color: 'var(--ink-faint)',
           letterSpacing: '0.04em',
         }}
@@ -96,7 +96,7 @@ function AddCustomLens({ lenses, setLenses }: { lenses: Lens[]; setLenses: Dispa
     borderRadius: 0,
     padding: '4px 6px',
     fontFamily: 'Instrument Sans, sans-serif',
-    fontSize: 11,
+    fontSize: 12.5,
     color: 'var(--ink)',
     boxSizing: 'border-box',
   }
@@ -122,7 +122,7 @@ function AddCustomLens({ lenses, setLenses }: { lenses: Lens[]; setLenses: Dispa
         }}
         placeholder="system prompt (optional)"
         rows={3}
-        style={{ ...inputStyle, resize: 'vertical', fontSize: 10, lineHeight: 1.4 }}
+        style={{ ...inputStyle, resize: 'vertical', fontSize: 11.5, lineHeight: 1.4 }}
       />
       <div style={{ display: 'flex', gap: 8 }}>
         <button
@@ -133,7 +133,7 @@ function AddCustomLens({ lenses, setLenses }: { lenses: Lens[]; setLenses: Dispa
             border: '1px solid var(--hairline)',
             cursor: name.trim() ? 'pointer' : 'default',
             padding: '3px 9px',
-            fontSize: 9,
+            fontSize: 10.5,
             letterSpacing: '0.08em',
             textTransform: 'uppercase',
             color: name.trim() ? 'var(--ink)' : 'var(--ink-faint)',
@@ -149,7 +149,7 @@ function AddCustomLens({ lenses, setLenses }: { lenses: Lens[]; setLenses: Dispa
             border: 'none',
             cursor: 'pointer',
             padding: '3px 9px',
-            fontSize: 9,
+            fontSize: 10.5,
             letterSpacing: '0.08em',
             textTransform: 'uppercase',
             color: 'var(--ink-faint)',
@@ -207,8 +207,8 @@ export default function LensRail({ lenses, setLenses, combine, setCombine, weigh
             >
               <div
                 style={{
-                  width: 14,
-                  height: 14,
+                  width: 16,
+                  height: 16,
                   borderRadius: '50%',
                   flexShrink: 0,
                   border: lens.active ? 'none' : '1px solid var(--ink-faint)',
@@ -220,7 +220,7 @@ export default function LensRail({ lenses, setLenses, combine, setCombine, weigh
                 style={{
                   fontFamily: "'Lora', Georgia, serif",
                   fontStyle: 'italic',
-                  fontSize: 13,
+                  fontSize: 15,
                   color: lens.active ? 'var(--ink)' : 'var(--ink-muted)',
                   transition: 'color 0.15s',
                 }}
@@ -245,7 +245,7 @@ export default function LensRail({ lenses, setLenses, combine, setCombine, weigh
                 <p
                   style={{
                     margin: '0 0 8px',
-                    fontSize: 10,
+                    fontSize: 11.5,
                     lineHeight: 1.55,
                     color: 'var(--ink-muted)',
                     display: '-webkit-box',
@@ -263,7 +263,7 @@ export default function LensRail({ lenses, setLenses, combine, setCombine, weigh
                       border: 'none',
                       cursor: 'pointer',
                       padding: 0,
-                      fontSize: 9,
+                      fontSize: 10.5,
                       letterSpacing: '0.1em',
                       textTransform: 'uppercase',
                       color: 'var(--ink-muted)',
@@ -277,7 +277,7 @@ export default function LensRail({ lenses, setLenses, combine, setCombine, weigh
                       border: '1px solid var(--hairline)',
                       cursor: 'pointer',
                       padding: '2px 7px',
-                      fontSize: 9,
+                      fontSize: 10.5,
                       letterSpacing: '0.06em',
                       color: 'var(--ink-muted)',
                       borderRadius: 0,
@@ -314,7 +314,7 @@ export default function LensRail({ lenses, setLenses, combine, setCombine, weigh
               <option>Weighted average</option>
             </select>
             {combine === 'Amplify disagreement' && (
-              <p style={{ margin: '5px 0 0', fontSize: 9, lineHeight: 1.5, color: 'var(--ink-muted)' }}>
+              <p style={{ margin: '5px 0 0', fontSize: 10.5, lineHeight: 1.5, color: 'var(--ink-muted)' }}>
                 Explores the edges — may produce less-coherent output by design.
               </p>
             )}
@@ -323,7 +323,7 @@ export default function LensRail({ lenses, setLenses, combine, setCombine, weigh
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
               <Label>Weight</Label>
-              <span style={{ fontSize: 8, color: 'var(--ink-faint)' }}>Independent</span>
+              <span style={{ fontSize: 9, color: 'var(--ink-faint)' }}>Independent</span>
             </div>
             <select value={weightMode} onChange={e => setWeightMode(e.target.value)} style={{ width: '100%' }}>
               <option>Equal weight</option>

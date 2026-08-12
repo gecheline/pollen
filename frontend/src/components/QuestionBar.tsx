@@ -65,7 +65,7 @@ export default function QuestionBar({
             border: 'none',
             cursor: canStartNewChat ? 'pointer' : 'default',
             padding: 0,
-            fontSize: 9,
+            fontSize: 10.5,
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
             color: canStartNewChat ? 'var(--ink-muted)' : 'var(--ink-faint)',
@@ -90,7 +90,7 @@ export default function QuestionBar({
           outline: 'none',
           padding: '0 16px',
           fontFamily: 'Instrument Sans, sans-serif',
-          fontSize: 14,
+          fontSize: 16,
           color: 'var(--ink)',
         }}
       />
@@ -106,7 +106,7 @@ export default function QuestionBar({
             cursor: canGenerate ? 'pointer' : 'wait',
             padding: '9px 20px',
             fontFamily: 'Instrument Sans, sans-serif',
-            fontSize: 12,
+            fontSize: 14,
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
             color: canGenerate ? 'var(--ink)' : 'var(--ink-muted)',

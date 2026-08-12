@@ -32,7 +32,7 @@ function Hero() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 9,
+            fontSize: 10.5,
             letterSpacing: '0.08em',
             textTransform: 'uppercase',
             color: 'var(--ink-faint)',
@@ -54,7 +54,7 @@ function Hero() {
           fontFamily: "'Lora', Georgia, serif",
           fontStyle: 'italic',
           fontWeight: 400,
-          fontSize: 40,
+          fontSize: 46,
           color: 'var(--ink)',
         }}
       >
@@ -98,8 +98,8 @@ function CardTile({ card, onClick }: { card: GalleryCard; onClick: () => void })
         />
       )}
       <div style={{ padding: '12px 14px' }}>
-        <div style={{ fontFamily: "'Lora', Georgia, serif", fontStyle: 'italic', fontSize: 15, color: 'var(--ink)' }}>{card.title}</div>
-        <div style={{ fontSize: 11, lineHeight: 1.5, color: 'var(--ink-muted)', marginTop: 5 }}>{card.subtitle}</div>
+        <div style={{ fontFamily: "'Lora', Georgia, serif", fontStyle: 'italic', fontSize: 17, color: 'var(--ink)' }}>{card.title}</div>
+        <div style={{ fontSize: 12.5, lineHeight: 1.5, color: 'var(--ink-muted)', marginTop: 5 }}>{card.subtitle}</div>
       </div>
     </button>
   )
@@ -130,7 +130,7 @@ export default function Landing({ index, onOpenCard }: { index: GalleryIndex; on
               padding: 24,
             }}
           >
-            <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-muted)', marginBottom: 16 }}>
+            <div style={{ fontSize: 11.5, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-muted)', marginBottom: 16 }}>
               {section.title}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16 }}>
@@ -161,7 +161,7 @@ export default function Landing({ index, onOpenCard }: { index: GalleryIndex; on
           background: 'var(--banner-surface)',
         }}
       >
-        <p style={{ margin: 0, fontSize: 12, lineHeight: 1.6, color: 'var(--banner-ink)', maxWidth: 620 }}>{index.footer.text}</p>
+        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: 'var(--banner-ink)', maxWidth: 620 }}>{index.footer.text}</p>
         <a
           href={index.github_url}
           target="_blank"
@@ -170,7 +170,7 @@ export default function Landing({ index, onOpenCard }: { index: GalleryIndex; on
             flexShrink: 0,
             border: '1px solid var(--banner-ink)',
             padding: '8px 16px',
-            fontSize: 10,
+            fontSize: 11.5,
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
             color: 'var(--banner-ink)',

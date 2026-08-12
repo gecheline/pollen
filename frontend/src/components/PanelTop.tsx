@@ -39,11 +39,14 @@ interface PanelTopProps {
   currentQuestion: string
   hover: Hover | null
   onHover: (h: Hover | null) => void
-  // Gallery-only (§6 of the gallery spec): an explanation of the scatter
-  // map itself, shown via an InfoButton pinned over its corner. Undefined
-  // (the default, and the only value the local app ever passes) renders
-  // the map exactly as it always has — nothing wraps it, nothing new
-  // mounts. Added as a prop rather than touching VocabMap.tsx itself.
+  // An explanation of the scatter map itself, shown via an InfoButton
+  // pinned over its corner — both apps pass lib/scatterInfo.ts's shared
+  // copy now (the local app used to leave this undefined and render the
+  // map with no explanation at all, which read as a real gap once every
+  // other chart on the page had its own info button). Still optional,
+  // and still added as a prop rather than touching VocabMap.tsx itself,
+  // since undefined renders the map exactly as it always has — nothing
+  // wraps it, nothing new mounts.
   mapInfo?: ReactNode
   // Gallery-only: the local app is a fixed-viewport workspace (App.tsx's
   // 100vh/overflow:hidden root) where each panel's answer text scrolls
@@ -57,6 +60,23 @@ interface PanelTopProps {
 
 const MIXED_COLOR_DEEP_EXPLANATION =
   "Each word here is tinted by whichever pollinator's predictions actually drove the model's choice at that step — the same color that pollinator uses in the rail, on its map, and in its own trace below. A run of one color means that pollinator was steering the answer for that stretch; a change in color means a different pollinator took over. The ribbon in the trace is colored the same way, so you can see exactly which color produced which part of the shape."
+
+// The mixed panel's tag dot: an equal-wedge conic-gradient pie over the
+// *actual* set of lenses that dominated at least one of its tokens —
+// derived straight from dominantLensId, the same field that already
+// drives the trace/text coloring, not a fixed list of "every lens that
+// was active" (which could include one that never actually won a token).
+// Equal wedges rather than weighted by token count on purpose: a
+// proportional pie would subtly reshape itself tick by tick as more
+// tokens reveal, which reads as the dot flickering rather than a stable
+// piece of identity for the panel.
+function mixedPieGradient(lensIds: LensId[], lensAccents: Record<LensId, string>): string {
+  const n = lensIds.length
+  if (n === 0) return ''
+  return `conic-gradient(${lensIds
+    .map((id, i) => `${lensAccents[id] ?? 'var(--ink-faint)'} ${(i / n) * 360}deg ${((i + 1) / n) * 360}deg`)
+    .join(', ')})`
+}
 
 export default function PanelTop({
   def,
@@ -83,18 +103,20 @@ export default function PanelTop({
   const onHoverFromText = (i: number | null) => onHover(i === null ? null : { index: i, source: 'text' })
 
   const dominantLensIds = data.kind === 'mixed' ? data.tokens.map(t => t.dominantLensId) : undefined
+  const mixedContributors = dominantLensIds ? Array.from(new Set(dominantLensIds)) : []
+  const dotBackground = mixedContributors.length > 0 ? mixedPieGradient(mixedContributors, lensAccents) : accent
 
   return (
     <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--hairline)' }}>
       {/* Specimen tag */}
       <div style={{ flexShrink: 0, padding: '10px 12px 0' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, paddingBottom: 9 }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: accent, flexShrink: 0 }} />
+          <div style={{ width: 16, height: 16, borderRadius: '50%', background: dotBackground, flexShrink: 0 }} />
           <span
             style={{
               fontFamily: "'Lora', Georgia, serif",
               fontStyle: 'italic',
-              fontSize: narrow ? 10 : 12,
+              fontSize: narrow ? 11.5 : 14,
               color: 'var(--ink)',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -104,7 +126,7 @@ export default function PanelTop({
             {label}
           </span>
           {data.kind === 'mixed' && (
-            <InfoButton side="below" align="right" width={230}>
+            <InfoButton side="below" align="right" width={230} accent={accent} isDark={isDark}>
               {MIXED_COLOR_DEEP_EXPLANATION}
             </InfoButton>
           )}
@@ -124,7 +146,7 @@ export default function PanelTop({
             isDark={isDark}
           />
           <div style={{ position: 'absolute', top: 6, right: 6 }}>
-            <InfoButton side="below" align="right" width={240}>
+            <InfoButton side="below" align="right" width={240} accent={accent} isDark={isDark}>
               {mapInfo}
             </InfoButton>
           </div>
@@ -148,23 +170,29 @@ export default function PanelTop({
       <div style={{ flex: 1, overflowY: answerOverflow, padding: narrow ? '8px 10px' : '10px 12px', borderTop: '1px solid var(--hairline)' }}>
         {history.map((turn, i) => (
           <div key={i} style={{ marginBottom: 10, paddingBottom: 10, borderBottom: '1px solid var(--hairline)' }}>
-            <p
-              style={{
-                margin: '0 0 4px',
-                fontFamily: "'Lora', Georgia, serif",
-                fontStyle: 'italic',
-                fontSize: narrow ? 10 : 11,
-                color: 'var(--ink-muted)',
-                textAlign: 'right',
-              }}
-            >
-              {turn.question}
-            </p>
+            {/* Blank turn.question (the gallery's own convention for "this
+                was the card's title turn, already said once at the top of
+                the page") skips the line entirely rather than rendering an
+                empty right-aligned paragraph — see TurnsCard etc. */}
+            {turn.question && (
+              <p
+                style={{
+                  margin: '0 0 4px',
+                  fontFamily: "'Lora', Georgia, serif",
+                  fontStyle: 'italic',
+                  fontSize: narrow ? 11.5 : 12.5,
+                  color: 'var(--ink-muted)',
+                  textAlign: 'right',
+                }}
+              >
+                {turn.question}
+              </p>
+            )}
             <p
               style={{
                 margin: 0,
                 fontFamily: "'JetBrains Mono', monospace",
-                fontSize: narrow ? 10 : 11,
+                fontSize: narrow ? 11.5 : 12.5,
                 lineHeight: 1.65,
                 color: 'var(--ink-muted)',
               }}
@@ -180,7 +208,7 @@ export default function PanelTop({
               margin: '0 0 4px',
               fontFamily: "'Lora', Georgia, serif",
               fontStyle: 'italic',
-              fontSize: narrow ? 10 : 11,
+              fontSize: narrow ? 11.5 : 12.5,
               color: 'var(--ink)',
               textAlign: 'right',
             }}
@@ -199,6 +227,7 @@ export default function PanelTop({
           hoveredTokenIndex={hoveredTokenIndex}
           onHoverToken={onHoverFromText}
           narrow={narrow}
+          isDark={isDark}
         />
       </div>
     </div>

@@ -21,6 +21,16 @@ export function panelText(data: PanelData): string {
   return data.tokens.map(t => t.text).join('')
 }
 
+// Turn 0's question is always the same text as the card's own title (see
+// CardView's <h1>) — showing it a second time, right-aligned above the
+// answer, read as pure repetition. PanelTop already skips rendering a
+// question line entirely when it's given an empty string (both for a
+// history entry and for the live currentQuestion), so blanking it here is
+// enough — turns 1+ (real follow-ups) pass through untouched.
+export function titleSuppressed(turn: LoadedTurn): string {
+  return turn.turnIndex === 0 ? '' : turn.question
+}
+
 export interface LoadedTurn {
   turnIndex: number
   question: string

@@ -240,6 +240,7 @@ async def save_capture(req: CaptureRequest):
         "slug": slug,
         "request": req.request,
         "frames": req.frames,
+        "observations": req.observations,
     }
 
     # Write atomically: a half-written file that still happens to parse as
@@ -270,6 +271,7 @@ async def list_captures():
                 "slug": data.get("slug", ""),
                 "user_message": data.get("request", {}).get("user_message", ""),
                 "bytes": path.stat().st_size,
+                "observations": data.get("observations"),
             }
         )
     rows.sort(key=lambda r: r["captured_at"] or "", reverse=True)

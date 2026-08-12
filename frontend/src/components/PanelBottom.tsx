@@ -21,17 +21,16 @@ interface PanelBottomProps {
   traceVisible: boolean
   hover: Hover | null
   onHover: (h: Hover | null) => void
+  isDark: boolean
 }
 
-const CAPTION_ROW_HEIGHT = 20 // reserved for the one-line caption + info button, above the chart
-
-const TRACE_CAPTION =
-  "line above 0 mean this pollinator favored the word more than baseline, below 0 favored less. a thicker line means the pollinator's whole set of likely next words differed more from baseline's."
+const CAPTION_ROW_HEIGHT = 24 // reserved for the info button alone, above the chart — the inline caption that used to share this row is gone
 
 const TRACE_DEEP_EXPLANATION =
   "At each word, the model isn't just picking one word — it's weighing many possible next words at once, each with its own odds. The vertical position compares one thing: how likely this pollinator was to pick the exact word that ended up here, versus how likely the plain baseline model was to pick that same word. Above zero, this pollinator favored it more; below, less. Thickness measures something else entirely: not this one word, but how different the pollinator's whole weighing of options was from baseline's at that moment — every word it was considering and how strongly. A thick ribbon sitting near zero means the pollinator was seriously considering a different set of words than baseline, and still happened to land on the same one. A thin ribbon far from zero means the pollinator's options looked a lot like baseline's, but it pushed hard for this specific word anyway."
 
-const BASELINE_TRACE_CAPTION = "the baseline has nothing to compare itself to — this flat line at 0 is the reference every other panel's line is measured against"
+const BASELINE_TRACE_DEEP_EXPLANATION =
+  "The baseline has nothing to compare itself to, so this line stays flat at 0 — it's the reference every other panel's line is measured against, not a real measurement of its own."
 
 export default function PanelBottom({
   data,
@@ -44,6 +43,7 @@ export default function PanelBottom({
   traceVisible,
   hover,
   onHover,
+  isDark,
 }: PanelBottomProps) {
   const hoveredTokenIndex = hover?.index ?? null
   const hoveredFromTrace = hover?.source === 'trace'
@@ -68,10 +68,10 @@ export default function PanelBottom({
     return (
       <div style={{ flex: 1, minWidth: 0, borderRight: '1px solid var(--hairline)' }}>
         <div style={{ padding: tracePadding, borderTop: '1px solid var(--hairline)' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, height: CAPTION_ROW_HEIGHT }}>
-            <p style={{ margin: 0, fontSize: 8, lineHeight: 1.4, color: 'var(--ink-muted)', fontFamily: 'Instrument Sans, sans-serif', flex: 1 }}>
-              {BASELINE_TRACE_CAPTION}
-            </p>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', height: CAPTION_ROW_HEIGHT }}>
+            <InfoButton side="above" align="right" width={240} accent={accent} isDark={isDark}>
+              {BASELINE_TRACE_DEEP_EXPLANATION}
+            </InfoButton>
           </div>
           <PullTrace
             // No lens to compare itself against, so every token is pinned
@@ -96,11 +96,8 @@ export default function PanelBottom({
   return (
     <div style={{ flex: 1, minWidth: 0, borderRight: '1px solid var(--hairline)' }}>
       <div style={{ padding: tracePadding, borderTop: '1px solid var(--hairline)' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, height: CAPTION_ROW_HEIGHT }}>
-          <p style={{ margin: 0, fontSize: 8, lineHeight: 1.4, color: 'var(--ink-muted)', fontFamily: 'Instrument Sans, sans-serif', flex: 1 }}>
-            {TRACE_CAPTION}
-          </p>
-          <InfoButton side="above" align="right" width={240}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', height: CAPTION_ROW_HEIGHT }}>
+          <InfoButton side="above" align="right" width={240} accent={accent} isDark={isDark}>
             {TRACE_DEEP_EXPLANATION}
           </InfoButton>
         </div>

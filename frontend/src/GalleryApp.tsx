@@ -113,7 +113,7 @@ export default function GalleryApp() {
             border: 'none',
             cursor: 'pointer',
             padding: 0,
-            fontSize: 9,
+            fontSize: 10.5,
             letterSpacing: '0.2em',
             textTransform: 'uppercase',
             color: 'var(--ink-muted)',
@@ -129,7 +129,7 @@ export default function GalleryApp() {
             border: 'none',
             cursor: 'pointer',
             padding: 0,
-            fontSize: 9,
+            fontSize: 10.5,
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
             color: 'var(--ink-muted)',
@@ -140,7 +140,7 @@ export default function GalleryApp() {
       </header>
 
       {loadError && (
-        <div style={{ padding: '6px 20px', fontSize: 10, color: 'var(--ink-muted)', borderBottom: '1px solid var(--hairline)' }}>
+        <div style={{ padding: '6px 20px', fontSize: 11.5, color: 'var(--ink-muted)', borderBottom: '1px solid var(--hairline)' }}>
           {loadError}
         </div>
       )}
@@ -150,7 +150,7 @@ export default function GalleryApp() {
       ) : card ? (
         <CardView index={index} card={card} onBack={goToLanding} isDark={dark} />
       ) : (
-        <div style={{ padding: 40, fontSize: 12, color: 'var(--ink-muted)' }}>
+        <div style={{ padding: 40, fontSize: 14, color: 'var(--ink-muted)' }}>
           Card "{view.cardId}" not found. <button onClick={goToLanding}>Back</button>
         </div>
       )}
