@@ -10,6 +10,7 @@ import { loadGalleryIndex, type GalleryIndex, type GalleryCard } from './lib/gal
 import { useTheme } from './lib/useTheme'
 import Landing from './components/gallery/Landing'
 import CardView from './components/gallery/CardView'
+import CookieBanner from './components/gallery/CookieBanner'
 
 type View = { kind: 'landing' } | { kind: 'card'; cardId: string }
 
@@ -154,6 +155,8 @@ export default function GalleryApp() {
           Card "{view.cardId}" not found. <button onClick={goToLanding}>Back</button>
         </div>
       )}
+
+      <CookieBanner />
     </div>
   )
 }
