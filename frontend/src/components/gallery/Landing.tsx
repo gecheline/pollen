@@ -99,7 +99,7 @@ function CardTile({ card, onClick }: { card: GalleryCard; onClick: () => void })
       )}
       <div style={{ padding: '12px 14px' }}>
         <div style={{ fontFamily: "'Lora', Georgia, serif", fontStyle: 'italic', fontSize: 17, color: 'var(--ink)' }}>{card.title}</div>
-        <div style={{ fontSize: 12.5, lineHeight: 1.5, color: 'var(--ink-muted)', marginTop: 5 }}>{card.subtitle}</div>
+        <div style={{ fontSize: 12.5, lineHeight: 1.5, color: 'var(--ink-muted)', marginTop: 5 }}>{card.tile_subtitle ?? card.subtitle}</div>
       </div>
     </button>
   )

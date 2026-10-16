@@ -30,7 +30,7 @@ const TRACE_DEEP_EXPLANATION =
   "At each word, the model isn't just picking one word — it's weighing many possible next words at once, each with its own odds. The vertical position compares one thing: how likely this pollinator was to pick the exact word that ended up here, versus how likely the plain baseline model was to pick that same word. Above zero, this pollinator favored it more; below, less. Thickness measures something else entirely: not this one word, but how different the pollinator's whole weighing of options was from baseline's at that moment — every word it was considering and how strongly. A thick ribbon sitting near zero means the pollinator was seriously considering a different set of words than baseline, and still happened to land on the same one. A thin ribbon far from zero means the pollinator's options looked a lot like baseline's, but it pushed hard for this specific word anyway."
 
 const BASELINE_TRACE_DEEP_EXPLANATION =
-  "The baseline has nothing to compare itself to, so this line stays flat at 0 — it's the reference every other panel's line is measured against, not a real measurement of its own."
+  "The baseline has nothing to compare itself to, so this line stays flat at 0 — it's the reference every other panel's line is measured against."
 
 export default function PanelBottom({
   data,

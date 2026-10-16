@@ -34,6 +34,22 @@ export interface LayoutProps {
   isDark: boolean
 }
 
+// The same square art the card's landing tile uses — gives the page a
+// visual anchor instead of opening on text alone. Like Landing's tiles, a
+// missing image just renders nothing rather than a broken-image glyph.
+function CardArt({ image }: { image: string }) {
+  const [failed, setFailed] = useState(false)
+  if (failed) return null
+  return (
+    <img
+      src={`/${image}`}
+      onError={() => setFailed(true)}
+      alt=""
+      style={{ display: 'block', width: 140, height: 140, margin: '0 auto 18px', objectFit: 'cover' }}
+    />
+  )
+}
+
 export default function CardView({
   index,
   card,
@@ -107,10 +123,18 @@ export default function CardView({
           </button>
         </div>
 
-        <h1 style={{ margin: '0 0 6px', fontFamily: "'Lora', Georgia, serif", fontStyle: 'italic', fontWeight: 400, fontSize: 25.5, color: 'var(--ink)' }}>
-          {card.title}
-        </h1>
-        <p style={{ margin: '0 0 20px', fontSize: 14, lineHeight: 1.6, color: 'var(--ink-muted)', maxWidth: 640 }}>{card.subtitle}</p>
+        {/* Centered hero, same arrangement as the landing page's logo over
+            "pollen": the card's art sits above its title. */}
+        <div style={{ textAlign: 'center', padding: '8px 4px 28px' }}>
+          <CardArt image={card.image} />
+          <h1 style={{ margin: '0 0 8px', fontFamily: "'Lora', Georgia, serif", fontStyle: 'italic', fontWeight: 400, fontSize: 32, color: 'var(--ink)' }}>
+            {card.title}
+          </h1>
+          <p style={{ margin: '0 auto', fontSize: 14, lineHeight: 1.6, color: 'var(--ink-muted)', maxWidth: 560 }}>{card.subtitle}</p>
+          {card.note && (
+            <p style={{ margin: '6px auto 0', fontSize: 12.5, lineHeight: 1.6, color: 'var(--ink-faint)', maxWidth: 560 }}>{card.note}</p>
+          )}
+        </div>
 
         {/* card.explainer (a short "what this chart does" line) used to
             render here as its own bordered paragraph — dropped now that
@@ -142,7 +166,7 @@ export default function CardView({
           })()
         )}
 
-        <ObservationsPanel open={showObservations} onClose={() => setShowObservations(false)} />
+        <ObservationsPanel open={showObservations} onClose={() => setShowObservations(false)} paragraphs={card.observations ?? []} />
       </div>
     </SkipAnimationsProvider>
   )

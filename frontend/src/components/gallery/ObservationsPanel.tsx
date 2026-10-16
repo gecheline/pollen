@@ -2,16 +2,10 @@
 // given conversation shows, opened on demand rather than always taking up
 // room next to the panels. Overlays the page (backdrop + fixed panel)
 // instead of pushing content around, so it works the same on a wide desktop
-// layout or a stacked mobile one. Lorem ipsum for now — real, per-card copy
-// comes later.
+// layout or a stacked mobile one. Copy is per card, from index.json's
+// `observations` (one string per paragraph).
 
-const PLACEHOLDER_PARAGRAPHS = [
-  'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-  'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.',
-  'Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
-]
-
-export default function ObservationsPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
+export default function ObservationsPanel({ open, onClose, paragraphs }: { open: boolean; onClose: () => void; paragraphs: string[] }) {
   if (!open) return null
 
   return (
@@ -43,7 +37,7 @@ export default function ObservationsPanel({ open, onClose }: { open: boolean; on
             ×
           </button>
         </div>
-        {PLACEHOLDER_PARAGRAPHS.map((p, i) => (
+        {paragraphs.map((p, i) => (
           <p key={i} style={{ margin: '0 0 14px', fontSize: 14, lineHeight: 1.65, color: 'var(--ink-muted)' }}>
             {p}
           </p>
