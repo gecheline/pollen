@@ -1,6 +1,6 @@
 {
   "title": "pollen",
-  "description": "Compare how different lenses change an LLM's answer to one question, visualized as a flower grammar.",
+  "description": "Compare how different lenses change an LLM's answer to one question.",
   "robots": {
     "index": false
   },
