@@ -30,7 +30,8 @@ import type { PanelDef, PanelData, VocabPoint, VocabActivation, GenState, LensId
 import type { AxisLimits } from '../../lib/mapLimits'
 import type { Hover } from '../hover'
 import type { TurnRecord } from '../PanelTop'
-import PanelTop from '../PanelTop'
+import PanelTop, { PanelMap } from '../PanelTop'
+import WordShifts from './WordShifts'
 import PanelBottom from '../PanelBottom'
 import { buildSurprisalScale, buildTraceScales } from '../../lib/scales'
 import { useMediaQuery } from '../../lib/useMediaQuery'
@@ -89,8 +90,90 @@ function GridGap({ vertical }: { vertical: boolean }) {
   )
 }
 
+// A full-width disclosure bar for one opt-in section. Same bordered,
+// raised-surface treatment as the question bar so it reads as part of
+// the grid's own structure.
+function SectionToggle({ open, onToggle, title, hint }: { open: boolean; onToggle: () => void; title: string; hint: string }) {
+  return (
+    <button
+      onClick={onToggle}
+      aria-expanded={open}
+      style={{
+        display: 'flex',
+        alignItems: 'baseline',
+        gap: 12,
+        flexWrap: 'wrap',
+        width: '100%',
+        textAlign: 'left',
+        padding: '12px 14px',
+        background: 'var(--surface-raised)',
+        border: 'none',
+        borderBottom: '1px solid var(--hairline)',
+        cursor: 'pointer',
+        color: 'inherit',
+        font: 'inherit',
+      }}
+    >
+      <span style={{ fontSize: 11.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink)', whiteSpace: 'nowrap' }}>
+        <span style={{ display: 'inline-block', width: 14, color: 'var(--ink-muted)' }}>{open ? '▾' : '▸'}</span>
+        {title}
+      </span>
+      <span style={{ fontSize: 12.5, color: 'var(--ink-faint)' }}>{hint}</span>
+    </button>
+  )
+}
+
+// One panel's column within an opt-in section: repeats the panel's tag
+// (dot + name) so a section scrolled well away from the text row still
+// says whose column is whose. `flush` drops the padding for charts that
+// manage their own.
+function Cell({
+  def,
+  data,
+  lensAccents,
+  narrow,
+  flush,
+  headerRule = flush,
+  divider = true,
+  children,
+}: {
+  def: PanelDef
+  data: PanelData
+  lensAccents: Record<LensId, string>
+  narrow: boolean
+  flush?: boolean
+  // Rule under the tag (defaults on for flush charts) / under the cell.
+  headerRule?: boolean
+  divider?: boolean
+  children: ReactNode
+}) {
+  // Same equal-wedge pie as PanelTop's mixed dot, over the lenses that
+  // actually won a token.
+  const contributors = data.kind === 'mixed' ? Array.from(new Set(data.tokens.map(t => t.dominantLensId))) : []
+  const dot =
+    contributors.length > 0
+      ? `conic-gradient(${contributors.map((id, i) => `${lensAccents[id] ?? 'var(--ink-faint)'} ${(i / contributors.length) * 360}deg ${((i + 1) / contributors.length) * 360}deg`).join(', ')})`
+      : def.accent
+  const pad = narrow ? '10px' : '12px'
+  return (
+    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--hairline)', borderBottom: divider ? '1px solid var(--hairline)' : 'none' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: `8px ${pad}`, borderBottom: headerRule ? '1px solid var(--hairline)' : 'none' }}>
+        <div style={{ width: 10, height: 10, borderRadius: '50%', background: dot, flexShrink: 0 }} />
+        <span style={{ fontFamily: "'Lora', Georgia, serif", fontStyle: 'italic', fontSize: 12.5, color: 'var(--ink-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {def.label}
+        </span>
+      </div>
+      <div style={{ flex: 1, padding: flush ? 0 : `4px ${pad} 14px` }}>{children}</div>
+    </div>
+  )
+}
+
 export default function PanelGrid({ pinned, toggleable, toggleBar, vocabPoints, mapLimits, isDark, lensAccents, mapInfo, breaker }: PanelGridProps) {
   const [hoverByPanel, setHoverByPanel] = useState<Record<string, Hover | null>>({})
+  // Both opt-in sections start closed and open independently — the answer
+  // text alone is the default view.
+  const [showShifts, setShowShifts] = useState(false)
+  const [showCharts, setShowCharts] = useState(false)
   const isMobile = useMediaQuery(MOBILE_QUERY)
   const allPanels = [...pinned, ...toggleable]
   // Stacked mobile panels are each full device width — the cramped-width
@@ -140,13 +223,43 @@ export default function PanelGrid({ pinned, toggleable, toggleBar, vocabPoints, 
       currentQuestion={p.currentQuestion ?? ''}
       hover={hoverByPanel[p.def.id] ?? null}
       onHover={onHover(p.def.id)}
-      mapInfo={mapInfo}
       // The gallery page scrolls itself (see GalleryApp.tsx) — an inner
       // scroll trap on top of that is what read as "cut off, not
       // scrollable" rather than intentional. Let the text grow naturally
       // and the page handle the rest, on both desktop and mobile.
       answerOverflow="visible"
+      // The map lives in the opt-in "under the hood" section instead.
+      showMap={false}
     />
+  )
+
+  const shifts = (p: GridPanel) => (
+    <Cell key={p.def.id} def={p.def} lensAccents={lensAccents} data={p.data} narrow={narrow}>
+      <WordShifts
+        data={p.data}
+        label={p.def.label}
+        accent={p.def.accent}
+        revealCount={p.revealCount}
+        isDark={isDark}
+        narrow={narrow}
+        onHover={onHover(p.def.id)}
+      />
+    </Cell>
+  )
+
+  const map = (p: GridPanel) => (
+    <Cell key={p.def.id} def={p.def} lensAccents={lensAccents} data={p.data} narrow={narrow} flush divider={isMobile}>
+      <PanelMap
+        vocabPoints={vocabPoints}
+        mapLimits={mapLimits}
+        activations={p.activations}
+        revealCount={p.revealCount}
+        accent={p.def.accent}
+        genState={genState}
+        isDark={isDark}
+        mapInfo={mapInfo}
+      />
+    </Cell>
   )
 
   const bottom = (p: GridPanel) => (
@@ -168,13 +281,65 @@ export default function PanelGrid({ pinned, toggleable, toggleBar, vocabPoints, 
 
   const hasGap = toggleable.length > 0 && pinned.length > 0
 
+  // One row of per-panel cells, with the same pinned | gap | toggleable
+  // split as the text row so every section's columns line up under it.
+  const row = (render: (p: GridPanel) => ReactNode) =>
+    isMobile ? (
+      <div>
+        {pinned.map(render)}
+        {hasGap && <GridGap vertical={false} />}
+        {toggleable.map(render)}
+      </div>
+    ) : (
+      <div style={{ display: 'flex' }}>
+        {pinned.map(render)}
+        {hasGap && <GridGap vertical />}
+        {toggleable.map(render)}
+      </div>
+    )
+
+  const sections = (
+    <>
+      <SectionToggle
+        open={showShifts}
+        onToggle={() => setShowShifts(v => !v)}
+        title="Standout words"
+        hint="The highlighted words in each answer, and how likely the baseline model was to say them"
+      />
+      {showShifts && row(shifts)}
+      <SectionToggle
+        open={showCharts}
+        onToggle={() => setShowCharts(v => !v)}
+        title="Under the hood"
+        hint="Embedding maps and pull traces, for a closer look"
+      />
+      {showCharts && (
+        <>
+          {row(map)}
+          {isMobile ? (
+            // Stacked: each trace directly under its own tag, not one
+            // anonymous row of charts.
+            <div>
+              {[...pinned, ...toggleable].map(p => (
+                <Cell key={p.def.id} def={p.def} lensAccents={lensAccents} data={p.data} narrow={narrow} flush headerRule={false}>
+                  {bottom(p)}
+                </Cell>
+              ))}
+            </div>
+          ) : (
+            <div style={{ borderBottom: '1px solid var(--hairline)' }}>{row(bottom)}</div>
+          )}
+        </>
+      )}
+    </>
+  )
+
   if (isMobile) {
     return (
       <div style={{ border: '1px solid var(--hairline)', marginBottom: 24 }}>
         {pinned.map((p, i) => (
           <div key={p.def.id} style={{ borderBottom: i < pinned.length - 1 || hasGap || toggleBar ? '1px solid var(--hairline)' : 'none' }}>
             {top(p)}
-            {bottom(p)}
           </div>
         ))}
         {hasGap && <GridGap vertical={false} />}
@@ -182,10 +347,10 @@ export default function PanelGrid({ pinned, toggleable, toggleBar, vocabPoints, 
         {toggleable.map((p, i) => (
           <div key={p.def.id} style={{ borderBottom: i < toggleable.length - 1 ? '1px solid var(--hairline)' : 'none' }}>
             {top(p)}
-            {bottom(p)}
           </div>
         ))}
         {breaker}
+        {sections}
       </div>
     )
   }
@@ -203,11 +368,7 @@ export default function PanelGrid({ pinned, toggleable, toggleBar, vocabPoints, 
         {toggleable.map(top)}
       </div>
       {breaker}
-      <div style={{ display: 'flex', borderTop: breaker ? 'none' : '1px solid var(--hairline)' }}>
-        {pinned.map(bottom)}
-        {hasGap && <GridGap vertical />}
-        {toggleable.map(bottom)}
-      </div>
+      {sections}
     </div>
   )
 }

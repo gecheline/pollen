@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react'
+
 // Landing page intro — three "beats" introducing what the gallery is and why
 // it exists, above the card sections. Copy is fixed editorial content (not
 // index.json data, unlike the card grid below it — there's nothing per-model
@@ -6,18 +8,31 @@
 // an image per beat — decided against them (text-only), so there's no
 // placeholder here to eventually swap out.
 
-const BEATS: { title: string; body: string }[] = [
+const linkStyle = { color: 'var(--ink)', textDecoration: 'underline', textUnderlineOffset: 2 }
+
+const BEATS: { title: string; body: ReactNode }[] = [
   {
     title: 'why this gallery',
-    body: "We talk to LLMs every day now, but most of us have no real picture of what's happening when we do. This gallery is an attempt to build one — not a diagram, something you can actually watch. Each answer comes with a live sketch of the model's internal vocabulary, the space it's pulling words from, lighting up as it writes.",
+    body: "We talk to LLMs every day now, but most of us have no real picture of what's happening when we do. This gallery is an attempt to build that intuition of what happens inside an LLM as it’s crafting an answer, and more importantly, how our own prompts can steer the answer one way or another. In the nerdiest sense, what you’ll see is a simplified representation of the embedding space and how probabilities are assigned to each token at the final step, before they turn into words in an actual answer. Or think of the charts as a sort of EEG of the LLM’s “mind”. The goal isn’t to decide which answer is the “right one”, but use the different perspectives presented in each as an input into getting a bigger picture view than what one single answer would give you. And develop an understanding of the right breadth and depth of prompting you need to get there.",
   },
   {
-    title: 'one pollinator changes everything',
-    body: 'We\'re increasingly telling models how to answer — be a "skeptic," a "socratic partner," an "expert." Each one of those instructions drives the answer to a different spot in that space. It\'s not a neutral framing device — it\'s a real move, and sometimes the plain, un-prompted answer is actually the better one. Here, you can toggle a single pollinator on and off against the baseline and watch exactly where it lands.',
+    title: 'prompting as pollinating',
+    body: 'We\'re increasingly telling models how to answer, like be a "skeptic," a "socratic partner," an "expert." Each one of those instructions drives the answer to certain spaces of the vocabulary that the LLM may not reach without that prompt. This often applies even in our basic questions, or how we talk, or certain phrases we may use unintentionally. In this sense, prompting is not a neutral framing device and it helps to think of it as pollinating — you, as an active influence that determines what grows through the LLM’s answer. To explore this, the gallery offers examples where you can toggle a single, or multiple, pollinators and compare their answers to the baseline LLM that hasn’t been pollinated with a specific prompt.',
   },
   {
-    title: 'what happens when you cross-pollinate',
-    body: 'Most tools that mix perspectives do it as a conversation — one expert speaks, then another, then someone summarizes. This works differently. Before a single word is chosen, the probabilities from several perspectives are blended together directly, under the hood. Not a panel discussion — one answer, made of more than one mind at once.',
+    title: 'a new approach: cross-pollination',
+    body: (
+      <>
+        Most tools available today that mix perspectives do it through{' '}
+        <a href="https://huggingface.co/blog/moe" target="_blank" rel="noopener noreferrer" style={linkStyle}>
+          choosing the best smaller “expert” models for a specific task
+        </a>
+        ; or through a conversation of multiple personas that a prompter can follow or be a part of. Cross-pollination here works differently. Before a single
+        word is chosen, the probabilities from several perspectives, derived from the same single underlying model, are blended together directly, under the
+        hood. The probability for a specific word to appear in the answer can then be influenced through different mechanisms, like amplifying agreement or
+        disagreement, leading to new, and potentially unexpected answers.
+      </>
+    ),
   },
 ]
 

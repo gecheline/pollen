@@ -223,7 +223,7 @@ def bake_card(card: dict, captures_dir: Path, out_root: Path, manifest: dict) ->
         "turns": turns_out,
         "bytes": total_bytes,
     }
-    for optional in ("explainer", "panel_order"):
+    for optional in ("explainer", "panel_order", "tile_subtitle", "note", "observations"):
         if optional in card:
             entry[optional] = card[optional]
     return entry

@@ -38,6 +38,12 @@ export interface GalleryCard {
   bytes: number
   explainer?: string
   panel_order?: string[]
+  // Landing-tile wording, when it differs from the page's own subtitle.
+  tile_subtitle?: string
+  // A small parenthetical under the subtitle on the card page only.
+  note?: string
+  // Paragraphs for the card's Observations sidebar.
+  observations?: string[]
 }
 
 export interface GallerySection {

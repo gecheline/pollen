@@ -4,7 +4,7 @@
   "model_name": "mlx-community/Llama-3.2-3B-Instruct-4bit",
   "github_url": "https://github.com/gecheline/pollen",
   "footer": {
-    "text": "Want to try this for yourself? Try the local version of pollen designed to run with Apple MLX and make your own pollinators, mix them etc.",
+    "text": "Want to try this for yourself? Try the local version of pollen (designed to run with Apple MLX) where you can make your own pollinators, cross-pollinate them and capture your observations etc.",
     "cta": "Get pollen"
   },
   "sections": [
@@ -15,7 +15,8 @@
         {
           "id": "two-plus-two",
           "title": "what's 2+2?",
-          "subtitle": "different answers to a straightforward question. is pollen even necessary here?",
+          "subtitle": "different answers to a straightforward question.",
+          "observations": ["This experiment captures how even the most straightforward question gets a specific “flavor” when pollinated with a prompt on how to answer. The vocabulary space of the baseline model only lights up in several spots with higher probability, resulting into a short answer, but each pollinated answer shows more words with high probabilities, resulting in longer and more elaborate answers.", "A provocation: what constitutes a straightforward question in your own conversations with LLMs? And when do you want the more colorful, nuanced and pollinated view?"],
           "image": "cards/two-plus-two.png",
           "layout": "toggle",
           "show_mixed": false,
@@ -85,7 +86,9 @@
         {
           "id": "war",
           "title": "when did the war end?",
-          "subtitle": "specifying who answers a question will influence the answer maybe even more than you think. pick your pollinators but pick them wisely.",
+          "subtitle": "pick your pollinators but pick them wisely.",
+          "note": "(make sure you also follow on to reveal the answer to a second question.)",
+          "observations": ["This experiment highlights the difference between pollinating with a broad “expert” prompt vs a narrow one, like a historical figure or known expert in a field. The more specific the pollinator, the more underlying context it carries along, without us needing to directly call it out: like asking about “the war” of Abraham Lincoln draws out an answer on the civil war, which isn’t the case for the baseline model or historian answers.", "A provocation: when might a specific perspective be more useful than a broader, or generic one? What do we gain or lose by simulating that specific perspective with AI as opposed to talking to a human?"],
           "image": "cards/war.png",
           "layout": "turns",
           "show_mixed": false,
@@ -150,7 +153,8 @@
         {
           "id": "universe",
           "title": "what's the nature of the universe?",
-          "subtitle": "what if we crosspolinated answers under the hood? does it change the answer?",
+          "subtitle": "a mix of answers based on agreement between different perspectives can reveal more nuanced points.",
+          "observations": ["This experiment is all about mixing multiple perspectives and amplifying the places where they agree. It’s a way of averaging answers, but more targeted than what the baseline model would. If the baseline model gives you an average of ALL possible answers, this one does so from a select subset. Interestingly enough, in this particular example, the mixed answer got more specific than the individual ones in some respect, calling out the Heisenberg Uncertainty Principle directly instead of hinting at “non-determinism” and “possibilities” as we delve deeper. What is being lost compared to the baseline answer though, is the specific mystical views around an underlying consciousness governing the universe, or the idea of a multiverse.", "A provocation: What’s more important, looking at the individual perspectives and stitching them together in your mind, or letting the model do that under the hood, which can both amplify some things but also cause some claims to be overlooked?"],
           "image": "cards/universe.png",
           "layout": "mixed_featured",
           "show_mixed": true,
@@ -205,7 +209,10 @@
         {
           "id": "art",
           "title": "why is art important to humans?",
-          "subtitle": "will amplifying disagreement between divergent views make for a more compelling answer?",
+          "subtitle": "amplifying disagreement can unveil unexpected, or more interesting, answers.",
+          "tile_subtitle": "amplifying disagreement can unveil unexpected, or more interesting, information.",
+          "note": "(this is a multi-turn conversation, so use the follow on button to explore all of the responses.)",
+          "observations": ["Sometimes what’s more interesting is where different perspectives disagree and this experiment probes that directly. Asking a vague art question of a poet and a skeptic will (hopefully) yield vastly different responses. But what happens when you pick apart the places where one overindexes heavily over the other and smush all of those places together? In the probability space, this tends to leave you with a smaller vocabulary to work with, but some of the answers can be more unexpected and more interesting than either of the two independent ones, and definitely more than the baseline model.", "If the baseline averages out, the idea for this way of mixing is to find the pockets of words that aren’t likely to come out from the plain LLM baseline. But this also means sometimes you’ll get stuff that don’t make sense, like the perspectives(typecast as mere entertainment) line in the first response. Or…“the enigma of Vincent Van Gogh argument with the universe, as seen in \"The Star {:”", "Finally, the mix of these discordant perspectives can also create a unique perspective that is more surprising than either of the individual ones, like the choice of favorite music for the cross-pollinated answer being John Cage's \"4'33”."],
           "image": "cards/art.png",
           "layout": "mixed_inline",
           "show_mixed": true,

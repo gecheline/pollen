@@ -56,6 +56,11 @@ interface PanelTopProps {
   // not scrollable") rather than intentional — it passes 'visible' so
   // the text just grows and the page handles the rest.
   answerOverflow?: 'auto' | 'visible'
+  // Gallery-only: false drops the map from this column entirely so the
+  // answer text sits straight under the tag — the gallery renders the map
+  // separately (via PanelMap) in its own opt-in "under the hood" section.
+  // Defaults to true, so the local app is unchanged.
+  showMap?: boolean
 }
 
 const MIXED_COLOR_DEEP_EXPLANATION =
@@ -78,6 +83,51 @@ function mixedPieGradient(lensIds: LensId[], lensAccents: Record<LensId, string>
     .join(', ')})`
 }
 
+// The vocab map plus its optional corner info button — split out of
+// PanelTop so the gallery can render the same map in a separate row.
+export function PanelMap({
+  vocabPoints,
+  mapLimits,
+  activations,
+  revealCount,
+  accent,
+  genState,
+  isDark,
+  mapInfo,
+}: {
+  vocabPoints: VocabPoint[]
+  mapLimits?: AxisLimits
+  activations: VocabActivation[]
+  revealCount: number
+  accent: string
+  genState: GenState
+  isDark: boolean
+  mapInfo?: ReactNode
+}) {
+  const map = (
+    <VocabMap
+      vocabPoints={vocabPoints}
+      mapLimits={mapLimits}
+      activations={activations}
+      revealCount={revealCount}
+      accent={accent}
+      genState={genState}
+      isDark={isDark}
+    />
+  )
+  if (!mapInfo) return map
+  return (
+    <div style={{ position: 'relative', flexShrink: 0 }}>
+      {map}
+      <div style={{ position: 'absolute', top: 6, right: 6 }}>
+        <InfoButton side="below" align="right" width={240} accent={accent} isDark={isDark}>
+          {mapInfo}
+        </InfoButton>
+      </div>
+    </div>
+  )
+}
+
 export default function PanelTop({
   def,
   data,
@@ -96,6 +146,7 @@ export default function PanelTop({
   onHover,
   mapInfo,
   answerOverflow = 'auto',
+  showMap = true,
 }: PanelTopProps) {
   const { label, accent } = def
 
@@ -134,25 +185,8 @@ export default function PanelTop({
         <div style={{ height: 1, background: 'var(--hairline)', margin: '0 -12px' }} />
       </div>
 
-      {mapInfo ? (
-        <div style={{ position: 'relative', flexShrink: 0 }}>
-          <VocabMap
-            vocabPoints={vocabPoints}
-            mapLimits={mapLimits}
-            activations={activations}
-            revealCount={revealCount}
-            accent={accent}
-            genState={genState}
-            isDark={isDark}
-          />
-          <div style={{ position: 'absolute', top: 6, right: 6 }}>
-            <InfoButton side="below" align="right" width={240} accent={accent} isDark={isDark}>
-              {mapInfo}
-            </InfoButton>
-          </div>
-        </div>
-      ) : (
-        <VocabMap
+      {showMap && (
+        <PanelMap
           vocabPoints={vocabPoints}
           mapLimits={mapLimits}
           activations={activations}
@@ -160,6 +194,7 @@ export default function PanelTop({
           accent={accent}
           genState={genState}
           isDark={isDark}
+          mapInfo={mapInfo}
         />
       )}
 
@@ -167,7 +202,7 @@ export default function PanelTop({
           (oldest first) render as plain muted text above the live one;
           scrolls once history makes it taller than the panel, rather than
           clipping older turns silently out of view. */}
-      <div style={{ flex: 1, overflowY: answerOverflow, padding: narrow ? '8px 10px' : '10px 12px', borderTop: '1px solid var(--hairline)' }}>
+      <div style={{ flex: 1, overflowY: answerOverflow, padding: narrow ? '8px 10px' : '10px 12px', borderTop: showMap ? '1px solid var(--hairline)' : 'none' }}>
         {history.map((turn, i) => (
           <div key={i} style={{ marginBottom: 10, paddingBottom: 10, borderBottom: '1px solid var(--hairline)' }}>
             {/* Blank turn.question (the gallery's own convention for "this
